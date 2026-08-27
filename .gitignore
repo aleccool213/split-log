@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.output/
+.vercel/
+.nitro/
+.pglite/
+*.log
+*.tsbuildinfo
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Grok App Builder internals
+.grok/
+.project_id
+.project_root
+.node_modules.lock
+AGENTS.md
+AGENTS.local.md
+startup.sh
+screenshots/
+artifacts/

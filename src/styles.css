@@ -1,0 +1,140 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,650&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #f3efe6;
+  --color-bg-elevated: #fffdf8;
+  --color-surface: #ece6d8;
+  --color-fg: #1c2320;
+  --color-muted: #5c6661;
+  --color-subtle: #8a928c;
+  --color-primary: #2f5d56;
+  --color-primary-fg: #f4f1ea;
+  --color-border: #d6cfc0;
+  --color-ring: #2f5d56;
+  --color-warn: #8a5a28;
+  --color-warn-bg: #f3e6d2;
+  --color-danger: #8f3d32;
+  --color-card: #fffdf8;
+  --color-background: #f3efe6;
+  --color-foreground: #1c2320;
+  --color-muted-foreground: #5c6661;
+  --color-secondary: #ece6d8;
+  --color-secondary-foreground: #1c2320;
+  --color-accent: #2f5d56;
+  --color-accent-foreground: #f4f1ea;
+  --color-input: #d6cfc0;
+  --color-destructive: #8f3d32;
+  --color-popover: #fffdf8;
+  --color-popover-foreground: #1c2320;
+
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 28px;
+
+  --shadow-border:
+    0 0 0 1px color-mix(in oklab, var(--color-fg) 8%, transparent),
+    0 1px 2px -1px color-mix(in oklab, var(--color-fg) 8%, transparent),
+    0 2px 8px -2px color-mix(in oklab, var(--color-fg) 6%, transparent);
+  --shadow-border-hover:
+    0 0 0 1px color-mix(in oklab, var(--color-fg) 12%, transparent),
+    0 1px 2px -1px color-mix(in oklab, var(--color-fg) 10%, transparent),
+    0 6px 16px -6px color-mix(in oklab, var(--color-fg) 10%, transparent);
+
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html,
+  body,
+  #app {
+    min-height: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-primary) 22%, transparent);
+    color: var(--color-fg);
+  }
+}
+
+.paper-grain {
+  background-image:
+    linear-gradient(180deg, color-mix(in oklab, var(--color-bg-elevated) 55%, transparent), transparent 42%),
+    repeating-linear-gradient(
+      -18deg,
+      transparent,
+      transparent 11px,
+      color-mix(in oklab, var(--color-fg) 2.2%, transparent) 12px
+    );
+}
+
+.stagger-in > * {
+  animation: rise-in 400ms var(--ease-smooth-out) both;
+}
+.stagger-in > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-in > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-in > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-in > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-in > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-in > *:nth-child(6) { animation-delay: 200ms; }
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger-in > * {
+    animation: none;
+  }
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
