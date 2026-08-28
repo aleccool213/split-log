@@ -1,14 +1,13 @@
 import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { History, LayoutDashboard, Plus, SlidersHorizontal } from "lucide-react";
+import { History, LayoutDashboard, SlidersHorizontal } from "lucide-react";
 import { SplitMark } from "@/components/mark";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { to: "/", label: "Board", icon: LayoutDashboard, primary: false },
-  { to: "/history", label: "Logbook", icon: History, primary: false },
-  { to: "/log", label: "Log", icon: Plus, primary: true },
-  { to: "/settings", label: "Settings", icon: SlidersHorizontal, primary: false },
+  { to: "/", label: "Board", icon: LayoutDashboard },
+  { to: "/history", label: "Logbook", icon: History },
+  { to: "/settings", label: "Settings", icon: SlidersHorizontal },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -28,18 +27,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             {NAV.map((item) => {
               const active = pathname === item.to;
               const Icon = item.icon;
-              if (item.primary) {
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className="ml-2 inline-flex h-10 items-center gap-2 rounded-md bg-primary px-3.5 text-sm font-medium text-primary-fg transition-transform duration-150 active:scale-[0.96]"
-                  >
-                    <Icon className="size-4" />
-                    Log session
-                  </Link>
-                );
-              }
               return (
                 <Link
                   key={item.to}
@@ -63,7 +50,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
-        <ul className="grid grid-cols-4">
+        <ul className="grid grid-cols-3">
           {NAV.map((item) => {
             const active = pathname === item.to;
             const Icon = item.icon;
@@ -73,14 +60,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                   to={item.to}
                   className={cn(
                     "flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-medium",
-                    item.primary ? "text-primary" : active ? "text-fg" : "text-muted",
+                    active ? "text-fg" : "text-muted",
                   )}
                 >
                   <span
                     className={cn(
                       "flex size-9 items-center justify-center rounded-full",
-                      item.primary && "bg-primary text-primary-fg",
-                      !item.primary && active && "bg-surface",
+                      active && "bg-surface",
                     )}
                   >
                     <Icon className="size-4" />

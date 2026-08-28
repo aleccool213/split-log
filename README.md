@@ -26,17 +26,17 @@ Reminder prefs live in [`data/settings.json`](data/settings.json):
 {
   "reminderEnabled": true,
   "reminderDays": 3,
-  "reminderTo": "you@example.com"
+  "reminderTo": "alec at alec.coffee"
 }
 ```
 
 - **reminderEnabled** — `true` to send off-the-water emails
 - **reminderDays** — quiet period (1–14) before a nudge
-- **reminderTo** — address the nudge goes to
+- **reminderTo** — write `name at domain` (not `name@domain`) so scrapers miss it. The public board never shows the address.
 
-Edit either file, commit, and push. Same as the log.
+Edit either file, commit, and push. There is no public “log a session” form — add rows in the CSV only.
 
-With `DATABASE_URL` set, the board also imports the CSV into Neon on dashboard load and at midnight Eastern. The **Log** page writes to that database (those rows are not overwritten by the CSV). Reminder knobs still come from `data/settings.json`.
+With `DATABASE_URL` set, the board also imports the CSV into Neon on dashboard load and at midnight Eastern. Reminder knobs still come from `data/settings.json`.
 
 ## Scheduled jobs (Vercel Cron)
 

@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HistoryRouteImport } from './routes/history'
-import { Route as LogRouteImport } from './routes/log'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ApiCronSyncRouteImport } from './routes/api/cron/sync'
 
@@ -23,11 +22,6 @@ const IndexRoute = IndexRouteImport.update({
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LogRoute = LogRouteImport.update({
-  id: '/log',
-  path: '/log',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -44,14 +38,12 @@ const ApiCronSyncRoute = ApiCronSyncRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
-  '/log': typeof LogRoute
   '/settings': typeof SettingsRoute
   '/api/cron/sync': typeof ApiCronSyncRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
-  '/log': typeof LogRoute
   '/settings': typeof SettingsRoute
   '/api/cron/sync': typeof ApiCronSyncRoute
 }
@@ -59,22 +51,20 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
-  '/log': typeof LogRoute
   '/settings': typeof SettingsRoute
   '/api/cron/sync': typeof ApiCronSyncRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/history' | '/log' | '/settings' | '/api/cron/sync'
+  fullPaths: '/' | '/history' | '/settings' | '/api/cron/sync'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/history' | '/log' | '/settings' | '/api/cron/sync'
-  id: '__root__' | '/' | '/history' | '/log' | '/settings' | '/api/cron/sync'
+  to: '/' | '/history' | '/settings' | '/api/cron/sync'
+  id: '__root__' | '/' | '/history' | '/settings' | '/api/cron/sync'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HistoryRoute: typeof HistoryRoute
-  LogRoute: typeof LogRoute
   SettingsRoute: typeof SettingsRoute
   ApiCronSyncRoute: typeof ApiCronSyncRoute
 }
@@ -93,13 +83,6 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/log': {
-      id: '/log'
-      path: '/log'
-      fullPath: '/log'
-      preLoaderRoute: typeof LogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -122,7 +105,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HistoryRoute: HistoryRoute,
-  LogRoute: LogRoute,
   SettingsRoute: SettingsRoute,
   ApiCronSyncRoute: ApiCronSyncRoute,
 }

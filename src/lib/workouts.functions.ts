@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { getSql, hasDatabase } from "@/lib/db";
 import {
   classifyCallToolError,
@@ -8,17 +7,10 @@ import {
   GoogleCalendarTools,
   isLoginRequired,
 } from "@/lib/app-data";
-import {
-  caloriesFromWatts,
-  parseWorkTime,
-  splitFromWork,
-  wattsFromSplit,
-} from "@/lib/format";
 import { loadFileSettings } from "@/lib/settings-file";
 import {
   buildStats,
   SHEET_NAME,
-  sourceKeyFor,
   toNumber,
   type LogSettings,
   type Workout,
@@ -82,6 +74,7 @@ function mapSettings(row: SettingsRow | undefined): LogSettings {
     reminderDays: file.reminderDays,
     reminderEnabled: file.reminderEnabled,
     reminderTo: file.reminderTo,
+    reminderToSet: Boolean(file.reminderTo),
     lastSyncedAt: stamp(row?.last_synced_at ?? null),
     lastNudgeAt: stamp(row?.last_nudge_at ?? null),
   };
@@ -111,6 +104,7 @@ async function loadSettings(): Promise<LogSettings> {
       reminderDays: file.reminderDays,
       reminderEnabled: file.reminderEnabled,
       reminderTo: file.reminderTo,
+      reminderToSet: Boolean(file.reminderTo),
       lastSyncedAt: new Date().toISOString(),
       lastNudgeAt: null,
     };
@@ -134,54 +128,12 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async () =
     }
   }
   const [workouts, settings] = await Promise.all([loadWorkouts(), loadSettings()]);
-  return { workouts, settings, stats: buildStats(workouts, settings) };
+  return {
+    workouts,
+    settings: { ...settings, reminderTo: "" },
+    stats: buildStats(workouts, settings),
+  };
 });
-
-const logSchema = z.object({
-  sessionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  description: z.string().trim().min(1).max(120),
-  workTime: z.string().trim().min(1).max(16),
-  distanceM: z.number().int().min(100).max(200000),
-  strokeRate: z.number().int().min(10).max(50).nullable(),
-  avgHr: z.number().int().min(40).max(220).nullable(),
-  notes: z.string().trim().max(280).default(""),
-});
-
-export const logWorkout = createServerFn({ method: "POST" })
-  .validator(logSchema)
-  .handler(async ({ data }) => {
-    if (!hasDatabase()) {
-      throw new Error(
-        "No DATABASE_URL on this deploy. Add the piece to data/split-log.csv and push, or attach Neon.",
-      );
-    }
-    const workSeconds = parseWorkTime(data.workTime);
-    if (!workSeconds) throw new Error("Work time looks off — try 20:28.0 or 7:28.4");
-    const split = splitFromWork(data.distanceM, workSeconds);
-    const watts = split ? wattsFromSplit(split) : null;
-    const calories = watts ? caloriesFromWatts(watts, workSeconds) : null;
-    const sourceKey = sourceKeyFor(data.sessionDate, data.description, data.distanceM, "manual");
-    const sql = await getSql();
-    await sql`
-      insert into workouts (
-        source_key, session_date, description, work_seconds, distance_m,
-        stroke_rate, split_seconds, watts, calories, avg_hr, notes, source
-      ) values (
-        ${sourceKey}, ${data.sessionDate}, ${data.description}, ${Math.round(workSeconds)},
-        ${data.distanceM}, ${data.strokeRate}, ${split}, ${watts}, ${calories},
-        ${data.avgHr}, ${data.notes}, ${"manual"}
-      )
-      on conflict (source_key) do update set
-        work_seconds = excluded.work_seconds,
-        stroke_rate = excluded.stroke_rate,
-        split_seconds = excluded.split_seconds,
-        watts = excluded.watts,
-        calories = excluded.calories,
-        avg_hr = excluded.avg_hr,
-        notes = excluded.notes
-    `;
-    return { ok: true as const };
-  });
 
 function looksLikeEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);

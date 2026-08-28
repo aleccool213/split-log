@@ -33,6 +33,7 @@ export type LogSettings = {
   reminderDays: number;
   reminderEnabled: boolean;
   reminderTo: string;
+  reminderToSet: boolean;
   lastSyncedAt: string | null;
   lastNudgeAt: string | null;
 };

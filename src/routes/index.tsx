@@ -55,13 +55,11 @@ function Home() {
         </section>
 
         {stats.due && (
-          <div className="flex flex-col gap-3 rounded-xl bg-warn-bg px-5 py-4 text-warn sm:flex-row sm:items-center sm:justify-between">
+          <div className="rounded-xl bg-warn-bg px-5 py-4 text-warn">
             <p className="text-sm font-medium">
-              The tank does not row itself. Twenty minutes of steady state still counts.
+              The tank does not row itself. Twenty minutes of steady state still counts. Add a row to
+              the log file and push.
             </p>
-            <Button asChild variant="secondary" size="sm" className="shrink-0">
-              <Link to="/log">Log a session</Link>
-            </Button>
           </div>
         )}
 
@@ -240,10 +238,7 @@ function EmptyLog() {
   return (
     <div className="flex flex-col items-start gap-3 py-6">
       <Timer className="size-6 text-muted" />
-      <p className="text-sm text-muted">No sessions yet. Log one, or add a row to the log file and push.</p>
-      <Button asChild size="sm">
-        <Link to="/log">Log session</Link>
-      </Button>
+      <p className="text-sm text-muted">No sessions yet. Add a row to data/split-log.csv and push.</p>
     </div>
   );
 }

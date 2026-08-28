@@ -1,12 +1,7 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
-import { toast } from "sonner";
-import { redirectToLoginIfRequired } from "@/lib/app-data";
+import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getDashboard, sendNudge } from "@/lib/workouts.functions";
+import { getDashboard } from "@/lib/workouts.functions";
 import { LOCAL_SETTINGS_FILE } from "@/lib/settings-file";
 import { LOCAL_LOG_FILE } from "@/lib/workouts";
 
@@ -17,35 +12,6 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsPage() {
   const { settings, stats } = Route.useLoaderData();
-  const router = useRouter();
-  const nudgeFn = useServerFn(sendNudge);
-  const [nudging, setNudging] = useState(false);
-
-  async function onNudge() {
-    setNudging(true);
-    try {
-      const result = await nudgeFn();
-      if (result && "loginRequired" in result && result.loginRequired) {
-        redirectToLoginIfRequired({
-          ok: false,
-          data: null,
-          loginRequired: true,
-          loginUrl: result.loginUrl,
-        });
-        return;
-      }
-      if (!result.ok) {
-        toast.error(result.error ?? "Could not send");
-        return;
-      }
-      toast.success("Nudge sent.");
-      await router.invalidate({ sync: true });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not send");
-    } finally {
-      setNudging(false);
-    }
-  }
 
   return (
     <AppShell>
@@ -81,7 +47,7 @@ function SettingsPage() {
             <CardTitle>Off-the-water reminder</CardTitle>
             <CardDescription>
               Source of truth is <span className="font-mono text-fg">{LOCAL_SETTINGS_FILE}</span>. Same workflow as
-              the log — edit, commit, push.
+              the log — edit, commit, push. The send-to address is not shown here.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
@@ -98,9 +64,7 @@ function SettingsPage() {
               </div>
               <div className="sm:col-span-2">
                 <dt className="text-muted">Send to</dt>
-                <dd className="font-medium font-mono">
-                  {settings.reminderTo || "not set — add reminderTo in the file"}
-                </dd>
+                <dd className="font-medium">{settings.reminderToSet ? "On file" : "Not set"}</dd>
               </div>
             </dl>
             <p className="text-sm text-muted">
@@ -109,18 +73,6 @@ function SettingsPage() {
                 : `Last session was ${stats.daysSince} day${stats.daysSince === 1 ? "" : "s"} ago.`}
               {settings.reminderEnabled && stats.due ? " Due on the water." : ""}
             </p>
-            <pre className="overflow-x-auto rounded-lg bg-surface px-4 py-3 text-xs text-fg">
-{`{
-  "reminderEnabled": ${settings.reminderEnabled},
-  "reminderDays": ${settings.reminderDays},
-  "reminderTo": "${settings.reminderTo}"
-}`}
-            </pre>
-            <div>
-              <Button onClick={onNudge} variant="outline" disabled={nudging}>
-                {nudging ? "Sending…" : "Send a test nudge"}
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </div>
