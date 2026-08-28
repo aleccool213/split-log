@@ -174,12 +174,9 @@ export default defineConfig(({ command, isPreview }) => ({
             // Auto-registers server/middleware/* (the PWA install page +
             // manifest + head-tag middleware). Nitro v3 defaults serverDir to
             // false, so removing this silently unwires /?install=1 on deploys.
+            // Crons live only in vercel.json — Nitro merges that file into the
+            // output, so listing them here too makes Vercel reject the deploy.
             serverDir: "./server",
-            vercel: {
-              config: {
-                crons: [{ path: "/api/cron/sync", schedule: "0 4 * * *" }],
-              },
-            },
           }),
         ]
       : []),
