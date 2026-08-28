@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { getSql } from "@/lib/db";
+import { getSql, hasDatabase } from "@/lib/db";
 import { headerIndex, parseCsv, pick } from "@/lib/csv";
 import {
   caloriesFromWatts,
@@ -64,6 +64,14 @@ export function parseSheetRows(csv: string): SheetWorkout[] {
   return out;
 }
 
+export function loadCsvWorkouts(csv: string = localCsv): Workout[] {
+  return parseSheetRows(csv)
+    .map((row, i) => ({ ...row, id: i + 1 }))
+    .sort((a, b) =>
+      a.sessionDate === b.sessionDate ? b.id - a.id : a.sessionDate < b.sessionDate ? 1 : -1,
+    );
+}
+
 function normalizeDate(raw: string): string | null {
   const t = raw.trim();
   const iso = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
@@ -123,6 +131,20 @@ export async function runSheetSync(opts?: { csv?: string; force?: boolean }): Pr
   const csv = (opts?.csv?.trim() || localCsv).trim();
   if (!csv) {
     return { ok: false, error: `No log file. Add rows to ${LOCAL_LOG_FILE} and push.` };
+  }
+
+  if (!hasDatabase()) {
+    const rows = parseSheetRows(csv);
+    if (rows.length === 0) {
+      return { ok: false, error: `${LOCAL_LOG_FILE} had no workout rows to import.` };
+    }
+    return {
+      ok: true,
+      imported: rows.length,
+      fileName: LOCAL_LOG_FILE,
+      skipped: true,
+      reason: "No DATABASE_URL — serving the CSV in-process.",
+    };
   }
 
   const hash = `local:${csvHash(csv)}`;

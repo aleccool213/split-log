@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { getSql } from "@/lib/db";
+import { getSql, hasDatabase } from "@/lib/db";
 import {
   classifyCallToolError,
   ConnectorType,
@@ -85,6 +85,10 @@ function mapSettings(row: SettingsRow | undefined): LogSettings {
 }
 
 async function loadWorkouts(): Promise<Workout[]> {
+  if (!hasDatabase()) {
+    const { loadCsvWorkouts } = await import("@/lib/sheet-sync");
+    return loadCsvWorkouts();
+  }
   const sql = await getSql();
   const rows = await sql<WorkoutRow>`
     select id, source_key, session_date, description, work_seconds, distance_m,
@@ -96,6 +100,16 @@ async function loadWorkouts(): Promise<Workout[]> {
 }
 
 async function loadSettings(): Promise<LogSettings> {
+  if (!hasDatabase()) {
+    return {
+      sheetFileId: null,
+      sheetName: SHEET_NAME,
+      reminderDays: 3,
+      reminderEnabled: true,
+      lastSyncedAt: new Date().toISOString(),
+      lastNudgeAt: null,
+    };
+  }
   const sql = await getSql();
   const rows = await sql<SettingsRow>`
     select sheet_file_id, sheet_name, reminder_days, reminder_enabled,
@@ -106,11 +120,13 @@ async function loadSettings(): Promise<LogSettings> {
 }
 
 export const getDashboard = createServerFn({ method: "GET" }).handler(async () => {
-  try {
-    const { runSheetSync } = await import("@/lib/sheet-sync");
-    await runSheetSync();
-  } catch {
-    // Board still renders from whatever is already in the log.
+  if (hasDatabase()) {
+    try {
+      const { runSheetSync } = await import("@/lib/sheet-sync");
+      await runSheetSync();
+    } catch {
+      // Board still renders from whatever is already in the log.
+    }
   }
   const [workouts, settings] = await Promise.all([loadWorkouts(), loadSettings()]);
   return { workouts, settings, stats: buildStats(workouts, settings) };
@@ -129,6 +145,11 @@ const logSchema = z.object({
 export const logWorkout = createServerFn({ method: "POST" })
   .validator(logSchema)
   .handler(async ({ data }) => {
+    if (!hasDatabase()) {
+      throw new Error(
+        "No DATABASE_URL on this deploy. Add the piece to data/split-log.csv and push, or attach Neon.",
+      );
+    }
     const workSeconds = parseWorkTime(data.workTime);
     if (!workSeconds) throw new Error("Work time looks off — try 20:28.0 or 7:28.4");
     const split = splitFromWork(data.distanceM, workSeconds);
@@ -165,6 +186,11 @@ const settingsSchema = z.object({
 export const updateSettings = createServerFn({ method: "POST" })
   .validator(settingsSchema)
   .handler(async ({ data }) => {
+    if (!hasDatabase()) {
+      throw new Error(
+        "Reminder preferences need a Neon DATABASE_URL. The public board still reads data/split-log.csv.",
+      );
+    }
     const sql = await getSql();
     await sql`
       update log_settings
@@ -198,6 +224,12 @@ function emailFromUnknown(data: unknown): string | null {
 }
 
 export const sendNudge = createServerFn({ method: "POST" }).handler(async () => {
+  if (!hasDatabase()) {
+    return {
+      ok: false as const,
+      error: "Reminders need DATABASE_URL (Neon) plus an email provider on Vercel.",
+    };
+  }
   const { callTool } = await import("@/lib/app-data/client.server");
   const [workouts, settings] = await Promise.all([loadWorkouts(), loadSettings()]);
   const stats = buildStats(workouts, settings);

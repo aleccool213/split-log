@@ -1,7 +1,7 @@
 import { pendingMigrations } from "../../scripts/migration-plan.mjs";
 
 /** Which database backend is active. */
-export type DbSource = "neon" | "pglite";
+export type DbSource = "neon" | "pglite" | "csv";
 
 // An empty/whitespace DATABASE_URL (an easy misconfig in deploy UIs) must mean
 // "unset" — otherwise production would silently run on the PGLite fallback.
@@ -10,13 +10,29 @@ const rawDatabaseUrl =
 const databaseUrl =
   rawDatabaseUrl && rawDatabaseUrl.trim() ? rawDatabaseUrl : undefined;
 
+function isVercelRuntime(): boolean {
+  if (typeof process === "undefined") return false;
+  return Boolean(
+    process.env.VERCEL || process.env.VERCEL_ENV || process.env.LAMBDA_TASK_ROOT,
+  );
+}
+
 /**
- * Active backend: real **Neon** when `DATABASE_URL` is set (deployed / configured
- * sandbox), otherwise a local embedded **PGLite** (Postgres compiled to WASM) so
- * the app has a working database even with nothing configured — the live preview
- * included. Swap in Neon later by just setting `DATABASE_URL`; no code changes.
+ * Active backend: real **Neon** when `DATABASE_URL` is set. Local / Grok preview
+ * uses embedded **PGLite**. Vercel without `DATABASE_URL` serves
+ * `data/split-log.csv` in-process — PGLite's wasm (`pglite.data`) is not in the
+ * lambda bundle and throws ENOENT on `/var/task/_libs/pglite.data`.
  */
-export const dbSource: DbSource = databaseUrl ? "neon" : "pglite";
+export const dbSource: DbSource = databaseUrl
+  ? "neon"
+  : isVercelRuntime()
+    ? "csv"
+    : "pglite";
+
+/** True when Neon (or any Postgres) is configured. False for PGLite and CSV. */
+export function hasDatabase(): boolean {
+  return dbSource === "neon";
+}
 
 /**
  * Minimal shared SQL surface, satisfied by both Neon and PGLite. Both the
@@ -33,7 +49,7 @@ export interface Sql {
   ): Promise<T[]>;
   query<T = Record<string, unknown>>(
     text: string,
-    params?: unknown[],
+    params?: unknown[]
   ): Promise<T[]>;
 }
 
@@ -176,7 +192,13 @@ async function createSql(): Promise<Sql> {
         "or a server route loader, never from client code.",
     );
   }
-  return dbSource === "neon" ? createNeonSql() : createPgliteSql();
+  if (dbSource === "neon") return createNeonSql();
+  if (dbSource === "csv") {
+    throw new Error(
+      "DATABASE_URL is not set. This Vercel deploy serves workouts from data/split-log.csv. Attach a Neon DATABASE_URL to persist logs and reminders.",
+    );
+  }
+  return createPgliteSql();
 }
 
 /**
@@ -214,7 +236,7 @@ export async function getPglite(): Promise<import("@electric-sql/pglite").PGlite
  *
  * - **PGLite** (preview / no `DATABASE_URL`): open the in-memory DB and apply
  *   `migrations/*.sql`. Idempotent — concurrent callers share one promise.
- * - **Neon**: no-op (pool is created lazily on first query).
+ * - **Neon** / **CSV** (Vercel without a database): no-op.
  *
  * Vite `configureServer` awaits this at dev startup; production imports of this
  * module kick it off immediately (see bottom of file).
