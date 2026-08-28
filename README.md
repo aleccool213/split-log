@@ -20,7 +20,23 @@ Date,Description,Work Time,Distance (m),Stroke Rate,Pace,Watts,Calories,Avg HR,N
 
 On Vercel with no database, the board **reads this file directly**. A `git push` + redeploy is enough for friends to see new pieces.
 
-With `DATABASE_URL` set, the board also imports the CSV into Neon on dashboard load and at midnight Eastern. The **Log** page writes to that database (those rows are not overwritten by the CSV).
+Reminder prefs live in [`data/settings.json`](data/settings.json):
+
+```json
+{
+  "reminderEnabled": true,
+  "reminderDays": 3,
+  "reminderTo": "you@example.com"
+}
+```
+
+- **reminderEnabled** — `true` to send off-the-water emails
+- **reminderDays** — quiet period (1–14) before a nudge
+- **reminderTo** — address the nudge goes to
+
+Edit either file, commit, and push. Same as the log.
+
+With `DATABASE_URL` set, the board also imports the CSV into Neon on dashboard load and at midnight Eastern. The **Log** page writes to that database (those rows are not overwritten by the CSV). Reminder knobs still come from `data/settings.json`.
 
 ## Scheduled jobs (Vercel Cron)
 

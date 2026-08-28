@@ -32,6 +32,7 @@ export type LogSettings = {
   sheetName: string;
   reminderDays: number;
   reminderEnabled: boolean;
+  reminderTo: string;
   lastSyncedAt: string | null;
   lastNudgeAt: string | null;
 };

@@ -14,6 +14,7 @@ import {
   splitFromWork,
   wattsFromSplit,
 } from "@/lib/format";
+import { loadFileSettings } from "@/lib/settings-file";
 import {
   buildStats,
   SHEET_NAME,
@@ -74,11 +75,13 @@ function stamp(value: string | Date | null): string | null {
 }
 
 function mapSettings(row: SettingsRow | undefined): LogSettings {
+  const file = loadFileSettings();
   return {
     sheetFileId: row?.sheet_file_id ?? null,
     sheetName: row?.sheet_name ?? SHEET_NAME,
-    reminderDays: row?.reminder_days ?? 3,
-    reminderEnabled: row?.reminder_enabled ?? true,
+    reminderDays: file.reminderDays,
+    reminderEnabled: file.reminderEnabled,
+    reminderTo: file.reminderTo,
     lastSyncedAt: stamp(row?.last_synced_at ?? null),
     lastNudgeAt: stamp(row?.last_nudge_at ?? null),
   };
@@ -100,12 +103,14 @@ async function loadWorkouts(): Promise<Workout[]> {
 }
 
 async function loadSettings(): Promise<LogSettings> {
+  const file = loadFileSettings();
   if (!hasDatabase()) {
     return {
       sheetFileId: null,
       sheetName: SHEET_NAME,
-      reminderDays: 3,
-      reminderEnabled: true,
+      reminderDays: file.reminderDays,
+      reminderEnabled: file.reminderEnabled,
+      reminderTo: file.reminderTo,
       lastSyncedAt: new Date().toISOString(),
       lastNudgeAt: null,
     };
@@ -178,29 +183,6 @@ export const logWorkout = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-const settingsSchema = z.object({
-  reminderDays: z.number().int().min(1).max(14),
-  reminderEnabled: z.boolean(),
-});
-
-export const updateSettings = createServerFn({ method: "POST" })
-  .validator(settingsSchema)
-  .handler(async ({ data }) => {
-    if (!hasDatabase()) {
-      throw new Error(
-        "Reminder preferences need a Neon DATABASE_URL. The public board still reads data/split-log.csv.",
-      );
-    }
-    const sql = await getSql();
-    await sql`
-      update log_settings
-      set reminder_days = ${data.reminderDays},
-          reminder_enabled = ${data.reminderEnabled}
-      where id = 1
-    `;
-    return { ok: true as const };
-  });
-
 function looksLikeEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
@@ -234,6 +216,10 @@ export const sendNudge = createServerFn({ method: "POST" }).handler(async () => 
   const [workouts, settings] = await Promise.all([loadWorkouts(), loadSettings()]);
   const stats = buildStats(workouts, settings);
 
+  if (!settings.reminderEnabled) {
+    return { ok: false as const, error: "Reminders are off in data/settings.json." };
+  }
+
   if (settings.lastNudgeAt) {
     const last = Date.parse(settings.lastNudgeAt);
     if (Number.isFinite(last) && Date.now() - last < 12 * 60 * 60 * 1000) {
@@ -241,21 +227,26 @@ export const sendNudge = createServerFn({ method: "POST" }).handler(async () => 
     }
   }
 
-  const cal = await callTool(
-    GoogleCalendarTools.listCalendars,
-    { max_results: 20 },
-    { connectorType: ConnectorType.GoogleCalendar },
-  );
-  if (isLoginRequired(cal)) {
-    return { ok: false as const, loginRequired: true, loginUrl: cal.loginUrl, error: cal.errorMessage };
-  }
-  const to = emailFromUnknown(cal.data);
+  let to = settings.reminderTo;
   if (!to) {
-    const classified = classifyCallToolError(cal);
-    return {
-      ok: false as const,
-      error: classified?.message ?? "Could not find a connected email to send the nudge to.",
-    };
+    const cal = await callTool(
+      GoogleCalendarTools.listCalendars,
+      { max_results: 20 },
+      { connectorType: ConnectorType.GoogleCalendar },
+    );
+    if (isLoginRequired(cal)) {
+      return { ok: false as const, loginRequired: true, loginUrl: cal.loginUrl, error: cal.errorMessage };
+    }
+    to = emailFromUnknown(cal.data) ?? "";
+    if (!to) {
+      const classified = classifyCallToolError(cal);
+      return {
+        ok: false as const,
+        error:
+          classified?.message ??
+          "Set reminderTo in data/settings.json, or connect Google Calendar so we can find an address.",
+      };
+    }
   }
 
   const days = stats.daysSince;
