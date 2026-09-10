@@ -1,6 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,650&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap");
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-bg: #f3efe6;
   --color-bg-elevated: #fffdf8;
@@ -51,10 +53,43 @@
   --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.dark {
+  --color-bg: #121614;
+  --color-bg-elevated: #1a1f1c;
+  --color-surface: #232a27;
+  --color-fg: #ece8df;
+  --color-muted: #9aa39d;
+  --color-subtle: #6f7873;
+  --color-primary: #7eb3aa;
+  --color-primary-fg: #0e1412;
+  --color-border: #323a36;
+  --color-ring: #7eb3aa;
+  --color-warn: #e0b07a;
+  --color-warn-bg: #3a2d1c;
+  --color-danger: #e08a7c;
+  --color-card: #1a1f1c;
+  --color-background: #121614;
+  --color-foreground: #ece8df;
+  --color-muted-foreground: #9aa39d;
+  --color-secondary: #232a27;
+  --color-secondary-foreground: #ece8df;
+  --color-accent: #7eb3aa;
+  --color-accent-foreground: #0e1412;
+  --color-input: #323a36;
+  --color-destructive: #e08a7c;
+  --color-popover: #1a1f1c;
+  --color-popover-foreground: #ece8df;
+}
+
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
   }
 
   html,

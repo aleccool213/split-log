@@ -16,11 +16,11 @@ import type { WeeklyPoint, Workout } from "@/lib/workouts";
 import { inferredSplit } from "@/lib/workouts";
 
 const tooltipStyle = {
-  background: "#fffdf8",
-  border: "1px solid #d6cfc0",
+  background: "var(--color-card)",
+  border: "1px solid var(--color-border)",
   borderRadius: 8,
   fontSize: 12,
-  color: "#1c2320",
+  color: "var(--color-fg)",
   boxShadow: "none",
 };
 
@@ -38,10 +38,10 @@ export function WeeklyVolumeChart({ weekly }: { weekly: WeeklyPoint[] }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data} margin={{ top: 8, right: 4, left: -18, bottom: 0 }}>
-        <CartesianGrid vertical={false} stroke="#d6cfc0" strokeDasharray="3 6" />
-        <XAxis dataKey="label" tick={{ fill: "#5c6661", fontSize: 11 }} axisLine={false} tickLine={false} />
+        <CartesianGrid vertical={false} stroke="var(--color-border)" strokeDasharray="3 6" />
+        <XAxis dataKey="label" tick={{ fill: "var(--color-muted)", fontSize: 11 }} axisLine={false} tickLine={false} />
         <YAxis
-          tick={{ fill: "#5c6661", fontSize: 11 }}
+          tick={{ fill: "var(--color-muted)", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v) => `${v}k`}
@@ -54,7 +54,7 @@ export function WeeklyVolumeChart({ weekly }: { weekly: WeeklyPoint[] }) {
             return p ? `${p.sessions} session${p.sessions === 1 ? "" : "s"}` : "";
           }}
         />
-        <Bar dataKey="km" fill="#2f5d56" radius={[6, 6, 2, 2]} maxBarSize={36} />
+        <Bar dataKey="km" fill="var(--color-primary)" radius={[6, 6, 2, 2]} maxBarSize={36} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -77,10 +77,10 @@ export function SplitTrendChart({ workouts }: { workouts: Workout[] }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <LineChart data={data} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
-        <CartesianGrid vertical={false} stroke="#d6cfc0" strokeDasharray="3 6" />
-        <XAxis dataKey="date" tick={{ fill: "#5c6661", fontSize: 11 }} axisLine={false} tickLine={false} />
+        <CartesianGrid vertical={false} stroke="var(--color-border)" strokeDasharray="3 6" />
+        <XAxis dataKey="date" tick={{ fill: "var(--color-muted)", fontSize: 11 }} axisLine={false} tickLine={false} />
         <YAxis
-          tick={{ fill: "#5c6661", fontSize: 11 }}
+          tick={{ fill: "var(--color-muted)", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           reversed
@@ -94,9 +94,9 @@ export function SplitTrendChart({ workouts }: { workouts: Workout[] }) {
         <Line
           type="monotone"
           dataKey="split"
-          stroke="#1c2320"
+          stroke="var(--color-fg)"
           strokeWidth={2}
-          dot={{ r: 3, fill: "#2f5d56", stroke: "#fffdf8", strokeWidth: 1 }}
+          dot={{ r: 3, fill: "var(--color-primary)", stroke: "var(--color-bg-elevated)", strokeWidth: 1 }}
           activeDot={{ r: 5 }}
         />
       </LineChart>
@@ -114,10 +114,10 @@ export function DistanceChart({ workouts }: { workouts: Workout[] }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <AreaChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-        <CartesianGrid vertical={false} stroke="#d6cfc0" strokeDasharray="3 6" />
-        <XAxis dataKey="date" tick={{ fill: "#5c6661", fontSize: 11 }} axisLine={false} tickLine={false} />
+        <CartesianGrid vertical={false} stroke="var(--color-border)" strokeDasharray="3 6" />
+        <XAxis dataKey="date" tick={{ fill: "var(--color-muted)", fontSize: 11 }} axisLine={false} tickLine={false} />
         <YAxis
-          tick={{ fill: "#5c6661", fontSize: 11 }}
+          tick={{ fill: "var(--color-muted)", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v) => (v >= 1000 ? `${v / 1000}k` : String(v))}
@@ -129,9 +129,9 @@ export function DistanceChart({ workouts }: { workouts: Workout[] }) {
         <Area
           type="monotone"
           dataKey="meters"
-          stroke="#2f5d56"
+          stroke="var(--color-primary)"
           strokeWidth={2}
-          fill="#2f5d56"
+          fill="var(--color-primary)"
           fillOpacity={0.12}
         />
       </AreaChart>
