@@ -10,7 +10,7 @@ The source of truth is [`data/split-log.csv`](data/split-log.csv). Add a row, co
 
 ```csv
 Date,Description,Work Time,Distance (m),Stroke Rate,Pace,Watts,Calories,Avg HR,Notes
-2026-08-27,"5,000m",21:10.0,5000,22,2:07.0,170,348,152,Steady
+2026-09-09,Just Row,25:59.0,4474,27,2:54.2,66,266,,PM showed 3:25 /500m at the end (live split)
 ```
 
 - **Date** — `YYYY-MM-DD`
@@ -19,6 +19,8 @@ Date,Description,Work Time,Distance (m),Stroke Rate,Pace,Watts,Calories,Avg HR,N
 - **Distance (m)** — meters as a number
 
 On Vercel with no database, the board **reads this file directly**. A `git push` + redeploy is enough for friends to see new pieces.
+
+A multi-week sample log lives in [`tests/fixtures/split-log.seed.csv`](tests/fixtures/split-log.seed.csv) for local/parser tests. Nothing under `tests/` is imported by the app, so that file is not bundled or shown on the public board.
 
 Reminder prefs live in [`data/settings.json`](data/settings.json):
 
