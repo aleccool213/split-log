@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
+import { ShareButton } from "@/components/share-button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -9,6 +10,7 @@ import {
   formatSplit,
   formatWorkTime,
 } from "@/lib/format";
+import { shareWorkoutPayload } from "@/lib/share";
 import { getDashboard } from "@/lib/workouts.functions";
 import { inferredSplit, type Workout } from "@/lib/workouts";
 
@@ -48,7 +50,7 @@ function HistoryPage() {
         <Card className="overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-left text-sm">
+              <table className="w-full min-w-[760px] text-left text-sm">
                 <thead className="border-b border-border bg-surface/60 text-xs uppercase tracking-[0.12em] text-muted">
                   <tr>
                     <Th>Date</Th>
@@ -59,6 +61,7 @@ function HistoryPage() {
                     <Th className="text-right">SPM</Th>
                     <Th className="text-right">W</Th>
                     <Th className="text-right">HR</Th>
+                    <Th className="text-right">Share</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -67,7 +70,7 @@ function HistoryPage() {
                   ))}
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="px-5 py-10 text-center text-muted">
+                      <td colSpan={9} className="px-5 py-10 text-center text-muted">
                         Nothing matches.
                       </td>
                     </tr>
@@ -101,6 +104,9 @@ function Row({ workout }: { workout: Workout }) {
       <td className="px-4 py-3 text-right tabular">{workout.strokeRate ?? "—"}</td>
       <td className="px-4 py-3 text-right tabular">{workout.watts ?? "—"}</td>
       <td className="px-4 py-3 text-right tabular">{workout.avgHr ?? "—"}</td>
+      <td className="px-2 py-2 text-right">
+        <ShareButton payload={shareWorkoutPayload(workout)} label="Share session" iconOnly variant="ghost" />
+      </td>
     </tr>
   );
 }

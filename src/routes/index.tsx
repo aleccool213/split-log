@@ -5,6 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { DistanceChart, SplitTrendChart, WeeklyVolumeChart } from "@/components/charts";
 import { MeterHeatmap } from "@/components/heatmap";
 import { SessionRow } from "@/components/session-row";
+import { ShareButton } from "@/components/share-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import {
   formatSplit,
   formatWorkTime,
 } from "@/lib/format";
+import { shareWorkoutPayload } from "@/lib/share";
 import { getDashboard } from "@/lib/workouts.functions";
 import { inferredSplit } from "@/lib/workouts";
 
@@ -97,14 +99,17 @@ function Home() {
 
         {last && (
           <Card>
-            <CardHeader>
-              <CardDescription>Last session</CardDescription>
-              <CardTitle className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <span>{last.description}</span>
-                <span className="font-sans text-base font-medium text-muted">
-                  {formatDateLong(last.sessionDate)}
-                </span>
-              </CardTitle>
+            <CardHeader className="flex-row items-start justify-between gap-3">
+              <div>
+                <CardDescription>Last session</CardDescription>
+                <CardTitle className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span>{last.description}</span>
+                  <span className="font-sans text-base font-medium text-muted">
+                    {formatDateLong(last.sessionDate)}
+                  </span>
+                </CardTitle>
+              </div>
+              <ShareButton payload={shareWorkoutPayload(last)} label="Share" />
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <Mini label="Distance" value={formatMetersFull(last.distanceM)} />

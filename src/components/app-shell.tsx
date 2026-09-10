@@ -3,6 +3,8 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { History, LayoutDashboard, SlidersHorizontal } from "lucide-react";
 import { SplitMark } from "@/components/mark";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ShareButton } from "@/components/share-button";
+import { shareBoardPayload } from "@/lib/share";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -44,6 +46,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 );
               })}
             </nav>
+            <ShareButton payload={shareBoardPayload()} label="Share board" iconOnly variant="ghost" />
             <ThemeToggle />
           </div>
         </div>
