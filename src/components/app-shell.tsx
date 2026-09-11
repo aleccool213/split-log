@@ -4,6 +4,7 @@ import { History, LayoutDashboard, SlidersHorizontal } from "lucide-react";
 import { SplitMark } from "@/components/mark";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ShareButton } from "@/components/share-button";
+import { PushSetup } from "@/components/push-setup";
 import { shareBoardPayload } from "@/lib/share";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="paper-grain min-h-dvh">
+      <PushSetup />
       <header className="sticky top-0 z-30 border-b border-border/80 bg-bg/85 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:h-16 sm:px-6">
           <Link to="/" className="flex items-center gap-2.5">

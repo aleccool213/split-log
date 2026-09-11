@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
+import { PushSettings } from "@/components/push-settings";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDashboard } from "@/lib/workouts.functions";
 import { LOCAL_SETTINGS_FILE } from "@/lib/settings-file";
@@ -26,6 +27,18 @@ function SettingsPage() {
 
         <Card>
           <CardHeader>
+            <CardTitle>PWA notifications</CardTitle>
+            <CardDescription>
+              Device banners only — no Resend, no Gmail. Allow once, then hit the test button to confirm this phone can show a reminder.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PushSettings />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Log file</CardTitle>
             <CardDescription>
               Source of truth is <span className="font-mono text-fg">{LOCAL_LOG_FILE}</span>. Columns: Date,
@@ -46,8 +59,8 @@ function SettingsPage() {
           <CardHeader>
             <CardTitle>Off-the-water reminder</CardTitle>
             <CardDescription>
-              Source of truth is <span className="font-mono text-fg">{LOCAL_SETTINGS_FILE}</span>. Same workflow as
-              the log — edit, commit, push. The send-to address is not shown here.
+              Source of truth is <span className="font-mono text-fg">{LOCAL_SETTINGS_FILE}</span>. Quiet window is
+              still {settings.reminderDays} day{settings.reminderDays === 1 ? "" : "s"}. Push will use that same rule once a device is subscribed.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
@@ -61,10 +74,6 @@ function SettingsPage() {
                 <dd className="font-medium">
                   {settings.reminderDays} day{settings.reminderDays === 1 ? "" : "s"}
                 </dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt className="text-muted">Send to</dt>
-                <dd className="font-medium">{settings.reminderToSet ? "On file" : "Not set"}</dd>
               </div>
             </dl>
             <p className="text-sm text-muted">
