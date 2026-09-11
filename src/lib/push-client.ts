@@ -1,3 +1,5 @@
+import { VAPID_PUBLIC_KEY } from "@/lib/push-vapid";
+
 export async function getRegistration(): Promise<ServiceWorkerRegistration | null> {
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return null;
   const existing = await navigator.serviceWorker.getRegistration();
@@ -66,6 +68,39 @@ export function pushEnvironment(): PushEnv {
   };
 }
 
+function urlBase64ToUint8Array(base64String: string): BufferSource {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  const output = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i += 1) output[i] = raw.charCodeAt(i);
+  return output;
+}
+
+export type BrowserSub = { endpoint: string; keys: { p256dh: string; auth: string } };
+
+export async function subscribePush(publicKey = VAPID_PUBLIC_KEY): Promise<BrowserSub> {
+  const env = pushEnvironment();
+  if (env.kind === "needs-install") throw new Error(env.hint);
+  if (!hasNotificationApi()) throw new Error("Notifications are not available in this browser.");
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") throw new Error("Notifications were not allowed.");
+  const reg = await getRegistration();
+  if (!reg) throw new Error("Service worker did not register.");
+  const existing = await reg.pushManager.getSubscription();
+  const sub =
+    existing ??
+    (await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    }));
+  const json = sub.toJSON();
+  if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+    throw new Error("Push subscription was incomplete.");
+  }
+  return { endpoint: json.endpoint, keys: { p256dh: json.keys.p256dh, auth: json.keys.auth } };
+}
+
 export async function enableNotifications(): Promise<NotificationPermission> {
   const env = pushEnvironment();
   if (env.kind === "needs-install") throw new Error(env.hint);
@@ -83,8 +118,8 @@ export async function sendDebugNotification(): Promise<void> {
   if (Notification.permission !== "granted") throw new Error("Allow notifications first.");
   const reg = await getRegistration();
   if (!reg) throw new Error("Service worker did not register. Reopen the Home Screen app and try again.");
-  await reg.showNotification("Split Log — test", {
-    body: "If you can read this, this device can show PWA banners. No email involved.",
+  await reg.showNotification("Split Log — local test", {
+    body: "Local banner from the open app. Use Send server test to hit the locked-phone path.",
     icon: "/favicon.svg",
     badge: "/favicon.svg",
     tag: "split-log-debug",

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, BellRing } from "lucide-react";
+import { Bell, BellRing, Cloud } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,17 +7,25 @@ import {
   hasNotificationApi,
   pushEnvironment,
   sendDebugNotification,
+  subscribePush,
   type PushEnv,
 } from "@/lib/push-client";
+import { getPushStatus, saveSubscription, sendTestPush } from "@/lib/push.functions";
 
 export function PushSettings() {
   const [env, setEnv] = useState<PushEnv | null>(null);
   const [permission, setPermission] = useState<string>("unknown");
+  const [kvReady, setKvReady] = useState<boolean | null>(null);
+  const [vapidReady, setVapidReady] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     setEnv(pushEnvironment());
     setPermission(hasNotificationApi() ? Notification.permission : "hidden until installed");
+    void getPushStatus().then((s) => {
+      setKvReady(s.kvReady);
+      setVapidReady(s.vapidReady);
+    });
   }, []);
 
   async function onEnable() {
@@ -26,9 +34,14 @@ export function PushSettings() {
       const next = await enableNotifications();
       setPermission(next);
       setEnv(pushEnvironment());
-      if (next === "granted") toast.success("Notifications allowed");
-      else if (next === "denied") toast.error("Blocked — iOS Settings → Notifications → Split Log");
-      else toast.message("Permission was dismissed");
+      if (next !== "granted") {
+        if (next === "denied") toast.error("Blocked — iOS Settings → Notifications → Split Log");
+        else toast.message("Permission was dismissed");
+        return;
+      }
+      const sub = await subscribePush();
+      await saveSubscription(sub);
+      toast.success("This iPhone is subscribed for closed-app reminders");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not enable notifications");
     } finally {
@@ -36,13 +49,26 @@ export function PushSettings() {
     }
   }
 
-  async function onTest() {
+  async function onLocalTest() {
     setBusy(true);
     try {
       await sendDebugNotification();
-      toast.success("Test banner sent — check the lock screen / banner");
+      toast.success("Local banner sent");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Test failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onServerTest() {
+    setBusy(true);
+    try {
+      const sub = await subscribePush();
+      const result = await sendTestPush(sub);
+      toast.success(result.result === "gone" ? "Subscription expired — tap Allow again" : "Server push sent — lock the phone and wait a second");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Server test failed");
     } finally {
       setBusy(false);
     }
@@ -59,21 +85,34 @@ export function PushSettings() {
           <dt className="text-muted">Permission</dt>
           <dd className="font-medium capitalize">{permission}</dd>
         </div>
+        <div>
+          <dt className="text-muted">Redis</dt>
+          <dd className="font-medium">{kvReady == null ? "…" : kvReady ? "Connected" : "Not connected"}</dd>
+        </div>
+        <div>
+          <dt className="text-muted">VAPID</dt>
+          <dd className="font-medium">{vapidReady == null ? "…" : vapidReady ? "Ready" : "Private key missing"}</dd>
+        </div>
       </dl>
       {env?.hint ? <p className="text-sm text-muted">{env.hint}</p> : null}
-      <ol className="list-decimal space-y-1 pl-5 text-sm text-muted">
-        <li>In Safari: Share → Add to Home Screen → Add</li>
-        <li>Leave Safari. Open the Split Log icon on the Home Screen</li>
-        <li>Settings → Allow notifications → Send test notification</li>
-      </ol>
+      {kvReady === false ? (
+        <p className="text-sm text-muted">
+          Vercel KV is gone. In the project: Storage → Create Database → Redis (Upstash). That injects
+          KV_REST_API_URL and KV_REST_API_TOKEN. Also set VAPID_PRIVATE_KEY from .env.example.
+        </p>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="secondary" disabled={busy} onClick={onEnable}>
           <Bell />
-          Allow notifications
+          Allow + subscribe
         </Button>
-        <Button type="button" disabled={busy} onClick={onTest}>
+        <Button type="button" variant="outline" disabled={busy} onClick={onLocalTest}>
           <BellRing />
-          Send test notification
+          Local test
+        </Button>
+        <Button type="button" disabled={busy} onClick={onServerTest}>
+          <Cloud />
+          Send server test
         </Button>
       </div>
     </div>
