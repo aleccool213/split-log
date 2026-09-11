@@ -4,21 +4,20 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   enableNotifications,
-  isStandalonePwa,
-  notificationSupported,
+  hasNotificationApi,
+  pushEnvironment,
   sendDebugNotification,
+  type PushEnv,
 } from "@/lib/push-client";
 
 export function PushSettings() {
-  const [supported, setSupported] = useState(false);
-  const [standalone, setStandalone] = useState(false);
-  const [permission, setPermission] = useState<NotificationPermission | "unknown">("unknown");
+  const [env, setEnv] = useState<PushEnv | null>(null);
+  const [permission, setPermission] = useState<string>("unknown");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    setSupported(notificationSupported());
-    setStandalone(isStandalonePwa());
-    if (typeof Notification !== "undefined") setPermission(Notification.permission);
+    setEnv(pushEnvironment());
+    setPermission(hasNotificationApi() ? Notification.permission : "hidden until installed");
   }, []);
 
   async function onEnable() {
@@ -26,8 +25,9 @@ export function PushSettings() {
     try {
       const next = await enableNotifications();
       setPermission(next);
+      setEnv(pushEnvironment());
       if (next === "granted") toast.success("Notifications allowed");
-      else if (next === "denied") toast.error("Blocked — enable them in iOS Settings → Split Log");
+      else if (next === "denied") toast.error("Blocked — iOS Settings → Notifications → Split Log");
       else toast.message("Permission was dismissed");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not enable notifications");
@@ -53,26 +53,25 @@ export function PushSettings() {
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
         <div>
           <dt className="text-muted">This device</dt>
-          <dd className="font-medium">
-            {!supported ? "Not supported" : standalone ? "Installed PWA" : "Browser tab"}
-          </dd>
+          <dd className="font-medium">{env?.label ?? "…"}</dd>
         </div>
         <div>
           <dt className="text-muted">Permission</dt>
           <dd className="font-medium capitalize">{permission}</dd>
         </div>
       </dl>
-      {!standalone && supported ? (
-        <p className="text-sm text-muted">
-          On iPhone, add Split Log to the Home Screen first. Safari tabs cannot show push banners.
-        </p>
-      ) : null}
+      {env?.hint ? <p className="text-sm text-muted">{env.hint}</p> : null}
+      <ol className="list-decimal space-y-1 pl-5 text-sm text-muted">
+        <li>In Safari: Share → Add to Home Screen → Add</li>
+        <li>Leave Safari. Open the Split Log icon on the Home Screen</li>
+        <li>Settings → Allow notifications → Send test notification</li>
+      </ol>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="secondary" disabled={busy || !supported} onClick={onEnable}>
+        <Button type="button" variant="secondary" disabled={busy} onClick={onEnable}>
           <Bell />
           Allow notifications
         </Button>
-        <Button type="button" disabled={busy || !supported} onClick={onTest}>
+        <Button type="button" disabled={busy} onClick={onTest}>
           <BellRing />
           Send test notification
         </Button>

@@ -18,6 +18,9 @@ export const Route = createRootRoute({
       { title: APP_NAME },
       { name: "theme-color", content: "#F3EFE6", media: "(prefers-color-scheme: light)" },
       { name: "theme-color", content: "#121614", media: "(prefers-color-scheme: dark)" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: APP_NAME },
+      { name: "mobile-web-app-capable", content: "yes" },
       {
         name: "description",
         content: "Concept 2 training log — splits, volume, and the next session.",
@@ -26,7 +29,7 @@ export const Route = createRootRoute({
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: "/__grok/manifest.webmanifest" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
     ],
   }),
