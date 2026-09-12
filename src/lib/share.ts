@@ -14,8 +14,8 @@ export function boardUrl(): string {
 
 export function shareBoardPayload(): SharePayload {
   return {
-    title: "Split Log",
-    text: "Concept 2 training board — splits, volume, and the season.",
+    title: "Alec Brunelle’s rowing tracker",
+    text: "Alec Brunelle’s Concept 2 rowing tracker — splits, volume, and the season.",
     url: boardUrl(),
   };
 }
@@ -31,8 +31,8 @@ export function shareWorkoutPayload(workout: Workout): SharePayload {
   if (workout.strokeRate) bits.push(`${workout.strokeRate} spm`);
   const line = bits.join(" · ");
   return {
-    title: `${workout.description} — Split Log`,
-    text: `${formatDate(workout.sessionDate)}\n${line}`,
+    title: `${workout.description} — Alec Brunelle’s rowing tracker`,
+    text: `Alec Brunelle’s rowing tracker\n${formatDate(workout.sessionDate)}\n${line}`,
     url: boardUrl(),
   };
 }

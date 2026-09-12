@@ -37,10 +37,10 @@ function Home() {
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">Concept 2 log</p>
             <h1 className="mt-1 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
-              Split Log
+              Alec Brunelle’s rowing tracker
             </h1>
             <p className="mt-2 max-w-xl text-muted">
-              Public training board. Meters, splits, and how the season is bending.
+              Public training board for the Concept 2. Meters, splits, and how the season is bending.
             </p>
           </div>
           {stats.due ? (
