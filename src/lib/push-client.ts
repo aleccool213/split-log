@@ -2,9 +2,12 @@ import { VAPID_PUBLIC_KEY } from "@/lib/push-vapid";
 
 export async function getRegistration(): Promise<ServiceWorkerRegistration | null> {
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return null;
-  const existing = await navigator.serviceWorker.getRegistration();
-  if (existing) return existing;
-  return navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  await navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => undefined);
+  try {
+    return await navigator.serviceWorker.ready;
+  } catch {
+    return navigator.serviceWorker.getRegistration();
+  }
 }
 
 export function isIosDevice(): boolean {
@@ -22,7 +25,7 @@ export function isStandalonePwa(): boolean {
 }
 
 export function hasNotificationApi(): boolean {
-  return typeof window !== "undefined" && "Notification" in window;
+  return typeof window !== "undefined" && typeof Notification !== "undefined";
 }
 
 export type PushEnv = {
@@ -44,7 +47,7 @@ export function pushEnvironment(): PushEnv {
     return {
       kind: "needs-install",
       label: "Safari tab",
-      hint: "iPhone only exposes notifications after Add to Home Screen. Share → Add to Home Screen, then open the icon and come back here.",
+      hint: "Open the Home Screen Split Log icon. Safari tabs cannot allow notifications.",
     };
   }
   if (notify && sw) {
@@ -58,7 +61,7 @@ export function pushEnvironment(): PushEnv {
     return {
       kind: "needs-install",
       label: "Home Screen app",
-      hint: "Opened from the icon, but this iOS build is still hiding Notification. Close every Split Log card, reopen the Home Screen icon (not Safari), then retry.",
+      hint: "Reopen the Home Screen icon (not Safari). Notification API is still hidden.",
     };
   }
   return {
@@ -68,7 +71,7 @@ export function pushEnvironment(): PushEnv {
   };
 }
 
-function urlBase64ToUint8Array(base64String: string): BufferSource {
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const raw = atob(base64);
@@ -79,21 +82,38 @@ function urlBase64ToUint8Array(base64String: string): BufferSource {
 
 export type BrowserSub = { endpoint: string; keys: { p256dh: string; auth: string } };
 
-export async function subscribePush(publicKey = VAPID_PUBLIC_KEY): Promise<BrowserSub> {
+export async function ensurePermission(): Promise<NotificationPermission> {
   const env = pushEnvironment();
   if (env.kind === "needs-install") throw new Error(env.hint);
   if (!hasNotificationApi()) throw new Error("Notifications are not available in this browser.");
-  const permission = await Notification.requestPermission();
-  if (permission !== "granted") throw new Error("Notifications were not allowed.");
+  if (Notification.permission === "granted") return "granted";
+  if (Notification.permission === "denied") {
+    throw new Error(
+      "iOS blocked Split Log. Settings → Notifications → Split Log → Allow Notifications. Then force-quit the PWA and open the Home Screen icon again.",
+    );
+  }
+  const next = await Notification.requestPermission();
+  if (next !== "granted") {
+    throw new Error(
+      next === "denied"
+        ? "You tapped Don’t Allow. iOS will not ask again until you enable it in Settings → Notifications → Split Log."
+        : "Permission was dismissed. Tap Allow + subscribe again and choose Allow on the iOS sheet.",
+    );
+  }
+  return next;
+}
+
+export async function subscribePush(publicKey = VAPID_PUBLIC_KEY): Promise<BrowserSub> {
+  await ensurePermission();
   const reg = await getRegistration();
-  if (!reg) throw new Error("Service worker did not register.");
-  const existing = await reg.pushManager.getSubscription();
-  const sub =
-    existing ??
-    (await reg.pushManager.subscribe({
+  if (!reg?.pushManager) throw new Error("Push manager missing. Reopen the Home Screen app.");
+  let sub = await reg.pushManager.getSubscription();
+  if (!sub) {
+    sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(publicKey),
-    }));
+    });
+  }
   const json = sub.toJSON();
   if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
     throw new Error("Push subscription was incomplete.");
@@ -102,20 +122,13 @@ export async function subscribePush(publicKey = VAPID_PUBLIC_KEY): Promise<Brows
 }
 
 export async function enableNotifications(): Promise<NotificationPermission> {
-  const env = pushEnvironment();
-  if (env.kind === "needs-install") throw new Error(env.hint);
-  if (!hasNotificationApi()) throw new Error("Notifications are not available in this browser.");
-  const permission = await Notification.requestPermission();
-  if (permission !== "granted") return permission;
+  const permission = await ensurePermission();
   await getRegistration();
   return permission;
 }
 
 export async function sendDebugNotification(): Promise<void> {
-  const env = pushEnvironment();
-  if (env.kind === "needs-install") throw new Error(env.hint);
-  if (!hasNotificationApi()) throw new Error("Notifications are not available in this browser.");
-  if (Notification.permission !== "granted") throw new Error("Allow notifications first.");
+  await ensurePermission();
   const reg = await getRegistration();
   if (!reg) throw new Error("Service worker did not register. Reopen the Home Screen app and try again.");
   await reg.showNotification("Split Log — local test", {

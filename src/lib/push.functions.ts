@@ -8,12 +8,22 @@ import { loadCsvWorkouts } from "@/lib/sheet-sync";
 import { buildStats, SHEET_NAME } from "@/lib/workouts";
 
 const subSchema = z.object({
-  endpoint: z.string().url(),
+  endpoint: z.string().min(8),
   keys: z.object({
     p256dh: z.string().min(8),
     auth: z.string().min(4),
   }),
 });
+
+function unwrapSub(input: unknown): PushSub {
+  if (input && typeof input === "object" && "data" in input) {
+    const inner = (input as { data: unknown }).data;
+    if (inner && typeof inner === "object" && "endpoint" in inner) {
+      return subSchema.parse(inner);
+    }
+  }
+  return subSchema.parse(input);
+}
 
 export const getPushStatus = createServerFn({ method: "GET" }).handler(async () => {
   return {
@@ -23,18 +33,25 @@ export const getPushStatus = createServerFn({ method: "GET" }).handler(async () 
   };
 });
 
-export const saveSubscription = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => subSchema.parse(input))
-  .handler(async ({ data }) => {
-    if (!hasKv()) throw new Error("Marketplace Redis is not connected on this deploy.");
+export const saveSubscription = createServerFn({ method: "POST" }).handler(async (ctx) => {
+  try {
+    if (!hasKv()) return { ok: false as const, error: "Marketplace Redis is not connected on this deploy." };
+    const data = unwrapSub((ctx as { data?: unknown }).data ?? ctx);
+    if (!isPushSub(data)) return { ok: false as const, error: "Invalid subscription." };
     await savePushSub(data);
     return { ok: true as const };
-  });
+  } catch (err) {
+    return { ok: false as const, error: err instanceof Error ? err.message : "Could not save subscription." };
+  }
+});
 
-export const sendTestPush = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => subSchema.parse(input))
-  .handler(async ({ data }) => {
-    if (!hasKv()) throw new Error("Marketplace Redis is not connected on this deploy.");
+export const sendTestPush = createServerFn({ method: "POST" }).handler(async (ctx) => {
+  try {
+    if (!hasKv()) return { ok: false as const, error: "Marketplace Redis is not connected. Add Redis in Vercel → Storage." };
+    if (!(process.env.VAPID_PRIVATE_KEY || "").trim()) {
+      return { ok: false as const, error: "VAPID_PRIVATE_KEY is not set on this Vercel project." };
+    }
+    const data = unwrapSub((ctx as { data?: unknown }).data ?? ctx);
     await savePushSub(data);
     const result = await sendToSub(data, {
       title: "Split Log — server test",
@@ -42,7 +59,10 @@ export const sendTestPush = createServerFn({ method: "POST" })
       url: "/",
     });
     return { ok: true as const, result };
-  });
+  } catch (err) {
+    return { ok: false as const, error: err instanceof Error ? err.message : "Server test failed." };
+  }
+});
 
 export async function runRemind(): Promise<{
   ok: boolean;
@@ -51,7 +71,7 @@ export async function runRemind(): Promise<{
   gone?: number;
 }> {
   const file = loadFileSettings();
-  const workouts = await loadCsvWorkouts();
+  const workouts = loadCsvWorkouts();
   const stats = buildStats(workouts, {
     sheetFileId: null,
     sheetName: SHEET_NAME,
@@ -81,10 +101,4 @@ export async function runRemind(): Promise<{
     url: "/",
   });
   return { ok: true, ...result };
-}
-
-export function parseSub(input: unknown): PushSub {
-  const data = subSchema.parse(input);
-  if (!isPushSub(data)) throw new Error("Invalid subscription");
-  return data;
 }

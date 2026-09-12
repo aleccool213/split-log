@@ -12,38 +12,50 @@ import {
 } from "@/lib/push-client";
 import { getPushStatus, saveSubscription, sendTestPush } from "@/lib/push.functions";
 
+function failMessage(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === "string") return err;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return "Unknown error";
+  }
+}
+
 export function PushSettings() {
   const [env, setEnv] = useState<PushEnv | null>(null);
   const [permission, setPermission] = useState<string>("unknown");
   const [kvReady, setKvReady] = useState<boolean | null>(null);
   const [vapidReady, setVapidReady] = useState<boolean | null>(null);
+  const [lastError, setLastError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     setEnv(pushEnvironment());
     setPermission(hasNotificationApi() ? Notification.permission : "hidden until installed");
-    void getPushStatus().then((s) => {
-      setKvReady(s.kvReady);
-      setVapidReady(s.vapidReady);
-    });
+    void getPushStatus()
+      .then((s) => {
+        setKvReady(s.kvReady);
+        setVapidReady(s.vapidReady);
+      })
+      .catch((err) => setLastError(failMessage(err)));
   }, []);
 
   async function onEnable() {
     setBusy(true);
+    setLastError(null);
     try {
       const next = await enableNotifications();
       setPermission(next);
       setEnv(pushEnvironment());
-      if (next !== "granted") {
-        if (next === "denied") toast.error("Blocked — iOS Settings → Notifications → Split Log");
-        else toast.message("Permission was dismissed");
-        return;
-      }
       const sub = await subscribePush();
-      await saveSubscription(sub);
+      const saved = await saveSubscription({ data: sub } as never);
+      if (saved && "ok" in saved && saved.ok === false) throw new Error(saved.error);
       toast.success("This iPhone is subscribed for closed-app reminders");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not enable notifications");
+      const message = failMessage(err);
+      setLastError(message);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -51,11 +63,14 @@ export function PushSettings() {
 
   async function onLocalTest() {
     setBusy(true);
+    setLastError(null);
     try {
       await sendDebugNotification();
       toast.success("Local banner sent");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Test failed");
+      const message = failMessage(err);
+      setLastError(message);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -63,12 +78,16 @@ export function PushSettings() {
 
   async function onServerTest() {
     setBusy(true);
+    setLastError(null);
     try {
       const sub = await subscribePush();
-      const result = await sendTestPush(sub);
+      const result = await sendTestPush({ data: sub } as never);
+      if (!result.ok) throw new Error(result.error);
       toast.success(result.result === "gone" ? "Subscription expired — tap Allow again" : "Server push sent — lock the phone and wait a second");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Server test failed");
+      const message = failMessage(err);
+      setLastError(message);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -97,10 +116,10 @@ export function PushSettings() {
       {env?.hint ? <p className="text-sm text-muted">{env.hint}</p> : null}
       {kvReady === false ? (
         <p className="text-sm text-muted">
-          Vercel KV is gone. In the project: Storage → Create Database → Redis (Upstash). That injects
-          KV_REST_API_URL and KV_REST_API_TOKEN. Also set VAPID_PRIVATE_KEY from .env.example.
+          Server test needs Redis. Vercel project → Storage → Create → Redis. Also set VAPID_PRIVATE_KEY.
         </p>
       ) : null}
+      {lastError ? <p className="text-sm text-danger">{lastError}</p> : null}
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="secondary" disabled={busy} onClick={onEnable}>
           <Bell />
