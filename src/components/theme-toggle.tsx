@@ -23,7 +23,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      className="inline-flex size-10 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-fg"
+      className="inline-flex size-10 items-center justify-center rounded-none text-muted transition-colors hover:bg-surface hover:text-fg"
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
       title={pref === "system" ? "Following system — tap to lock" : dark ? "Dark" : "Light"}
     >

@@ -18,7 +18,7 @@ import { inferredSplit } from "@/lib/workouts";
 const tooltipStyle = {
   background: "var(--color-card)",
   border: "1px solid var(--color-border)",
-  borderRadius: 8,
+  borderRadius: 0,
   fontSize: 12,
   color: "var(--color-fg)",
   boxShadow: "none",
@@ -54,7 +54,7 @@ export function WeeklyVolumeChart({ weekly }: { weekly: WeeklyPoint[] }) {
             return p ? `${p.sessions} session${p.sessions === 1 ? "" : "s"}` : "";
           }}
         />
-        <Bar dataKey="km" fill="var(--color-primary)" radius={[6, 6, 2, 2]} maxBarSize={36} />
+        <Bar dataKey="km" fill="var(--color-primary)" radius={[0, 0, 0, 0]} maxBarSize={36} />
       </BarChart>
     </ResponsiveContainer>
   );
