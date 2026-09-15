@@ -56,7 +56,7 @@ export function MeterHeatmap({ workouts }: { workouts: Workout[] }) {
                 <Tooltip key={date}>
                   <TooltipTrigger asChild>
                     <div
-                      className={cn("size-3.5 rounded-[3px] sm:size-4", tone(meters, date))}
+                      className={cn("size-3.5 rounded-none sm:size-4", tone(meters, date))}
                       aria-label={`${date}: ${meters} meters`}
                     />
                   </TooltipTrigger>
