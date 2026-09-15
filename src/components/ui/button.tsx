@@ -4,23 +4,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[transform,background-color,box-shadow,color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 active:not-disabled:scale-[0.96]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none text-sm font-medium transition-[background-color,color,box-shadow] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-fg shadow-[var(--shadow-border)] hover:bg-primary/90",
+        default: "bg-primary text-primary-fg hover:bg-primary/90",
         secondary:
           "bg-bg-elevated text-fg shadow-[var(--shadow-border)] hover:shadow-[var(--shadow-border-hover)]",
         outline:
-          "border border-border bg-transparent text-fg hover:bg-surface",
+          "border border-fg/20 bg-bg-elevated text-fg hover:border-fg",
         ghost: "text-fg hover:bg-surface",
         danger: "bg-danger text-primary-fg hover:bg-danger/90",
       },
       size: {
-        default: "h-11 px-4",
-        sm: "h-9 rounded-sm px-3 text-xs",
-        lg: "h-12 rounded-lg px-5",
-        icon: "size-11",
+        default: "h-10 px-4",
+        sm: "h-8 px-3 text-xs",
+        lg: "h-11 px-5",
+        icon: "size-10",
       },
     },
     defaultVariants: {
