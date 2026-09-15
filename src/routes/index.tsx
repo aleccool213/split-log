@@ -57,7 +57,7 @@ function Home() {
         </section>
 
         {stats.due && (
-          <div className="rounded-xl bg-warn-bg px-5 py-4 text-warn">
+          <div className="rounded-none border border-warn/30 bg-warn-bg px-5 py-4 text-warn">
             <p className="text-sm font-medium">
               The tank does not row itself. Twenty minutes of steady state still counts. Add a row to
               the log file and push.
