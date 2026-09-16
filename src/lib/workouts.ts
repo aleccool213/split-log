@@ -47,7 +47,7 @@ export type WeeklyPoint = {
 
 export type PersonalBest = {
   label: string;
-  distanceM: number;
+  metric: "split" | "distance" | "duration";
   workout: Workout | null;
 };
 
@@ -86,19 +86,26 @@ export function inferredWatts(w: Workout): number | null {
   return split ? wattsFromSplit(split) : null;
 }
 
-function isDistancePiece(w: Workout, meters: number): boolean {
-  if (w.distanceM === meters) return true;
-  const d = w.description.toLowerCase();
-  if (meters === 2000) return /\b2,?000m\b|\b2k\b/.test(d) && w.distanceM >= 1900 && w.distanceM <= 2100;
-  if (meters === 5000) return /\b5,?000m\b|\b5k\b/.test(d) && w.distanceM >= 4800 && w.distanceM <= 5200;
-  if (meters === 10000) return /\b10,?000m\b|\b10k\b/.test(d) && w.distanceM >= 9600 && w.distanceM <= 10400;
-  return false;
+function bestBySplit(workouts: Workout[]): Workout | null {
+  const candidates = workouts.filter((w) => w.workSeconds > 0 && w.distanceM > 0);
+  if (candidates.length === 0) return null;
+  return candidates.reduce((best, w) => {
+    const split = inferredSplit(w);
+    const bestSplit = inferredSplit(best);
+    if (split == null) return best;
+    if (bestSplit == null) return w;
+    return split < bestSplit ? w : best;
+  });
 }
 
-function bestForDistance(workouts: Workout[], meters: number): Workout | null {
-  const candidates = workouts.filter((w) => isDistancePiece(w, meters) && w.workSeconds > 0);
-  if (candidates.length === 0) return null;
-  return candidates.reduce((best, w) => (w.workSeconds < best.workSeconds ? w : best));
+function bestByDistance(workouts: Workout[]): Workout | null {
+  if (workouts.length === 0) return null;
+  return workouts.reduce((best, w) => (w.distanceM > best.distanceM ? w : best));
+}
+
+function bestByDuration(workouts: Workout[]): Workout | null {
+  if (workouts.length === 0) return null;
+  return workouts.reduce((best, w) => (w.workSeconds > best.workSeconds ? w : best));
 }
 
 export function buildStats(workouts: Workout[], settings: LogSettings): DashboardStats {
@@ -182,9 +189,9 @@ export function buildStats(workouts: Workout[], settings: LogSettings): Dashboar
     avgSplit7: split7.length ? split7.reduce((s, x) => s + x, 0) / split7.length : null,
     weekly,
     pbs: [
-      { label: "2k", distanceM: 2000, workout: bestForDistance(workouts, 2000) },
-      { label: "5k", distanceM: 5000, workout: bestForDistance(workouts, 5000) },
-      { label: "10k", distanceM: 10000, workout: bestForDistance(workouts, 10000) },
+      { label: "Fastest pace", metric: "split", workout: bestBySplit(workouts) },
+      { label: "Longest row", metric: "distance", workout: bestByDistance(workouts) },
+      { label: "Longest time", metric: "duration", workout: bestByDuration(workouts) },
     ],
   };
 }
