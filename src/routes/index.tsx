@@ -17,7 +17,7 @@ import {
 } from "@/lib/format";
 import { shareWorkoutPayload } from "@/lib/share";
 import { getDashboard } from "@/lib/workouts.functions";
-import { inferredSplit } from "@/lib/workouts";
+import { inferredSplit, type PersonalBest } from "@/lib/workouts";
 
 export const Route = createFileRoute("/")({
   loader: () => getDashboard(),
@@ -167,7 +167,7 @@ function Home() {
           <Card>
             <CardHeader>
               <CardTitle>Personal bests</CardTitle>
-              <CardDescription>Fastest work time at a standard distance</CardDescription>
+              <CardDescription>Best pace, distance, and duration across every logged row</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {stats.pbs.map((pb) => (
@@ -175,11 +175,11 @@ function Home() {
                   <div>
                     <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">{pb.label}</p>
                     <p className="font-display text-2xl font-semibold tabular">
-                      {pb.workout ? formatWorkTime(pb.workout.workSeconds) : "—"}
+                      {pb.workout ? pbHeadline(pb) : "—"}
                     </p>
                   </div>
                   <p className="text-sm text-muted tabular">
-                    {pb.workout ? formatSplit(inferredSplit(pb.workout)) : "not yet"}
+                    {pb.workout ? pbDetail(pb) : "not yet"}
                   </p>
                 </div>
               ))}
@@ -228,6 +228,20 @@ function Stat({
       </CardContent>
     </Card>
   );
+}
+
+function pbHeadline(pb: PersonalBest): string {
+  const w = pb.workout!;
+  if (pb.metric === "split") return formatSplit(inferredSplit(w));
+  if (pb.metric === "distance") return formatMetersFull(w.distanceM);
+  return formatWorkTime(w.workSeconds);
+}
+
+function pbDetail(pb: PersonalBest): string {
+  const w = pb.workout!;
+  if (pb.metric === "split") return formatMetersFull(w.distanceM);
+  if (pb.metric === "distance") return formatSplit(inferredSplit(w));
+  return formatMetersFull(w.distanceM);
 }
 
 function Mini({ label, value }: { label: string; value: string }) {
