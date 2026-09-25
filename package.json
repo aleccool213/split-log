@@ -8,6 +8,7 @@
   },
   "scripts": {
     "og": "node scripts/write-og.mjs",
+    "brand": "node scripts/render-brand.mjs",
     "dev": "npm run og && node scripts/with-app-env.mjs vite dev --host 0.0.0.0 --port 8080",
     "build": "npm run og && node scripts/with-app-env.mjs vite build && npm run db:migrate",
     "db:migrate": "node scripts/migrate.mjs",
