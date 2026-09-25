@@ -59,6 +59,33 @@ Hobby includes two crons, which is enough for both jobs.
 
 Turn off **Deployment Protection** (Settings → Deployment Protection → Vercel Authentication → Disabled, or Only Preview Deployments) so the production URL is public.
 
+## UI: `@omarchy/ui`
+
+The theme, header, charts, heatmap, stat tiles and lists come from
+[`@omarchy/ui`](https://github.com/aleccool213/omarchy-astro-ui), the component
+library shared with health-board, household-money and bigal. This app uses its
+React renderers (`@omarchy/ui/react`).
+
+| Library piece | Used in | Replaced |
+| --- | --- | --- |
+| `OmPageHeader` (with `dock`) | `components/app-shell.tsx` | hand-built sticky header and mobile dock |
+| `OmThemeToggle` + `noFlashScript` | header, `routes/__root.tsx` | `theme-toggle.tsx`, `lib/theme.ts`, the inline boot script |
+| `OmStat` / `OmStatGrid` | `routes/index.tsx` | the local `Stat` card |
+| `OmTimeSeriesChart` | `components/charts.tsx` | recharts (dependency removed) |
+| `OmActivityHeatmap` | `components/heatmap.tsx` | the hand-built 16-week grid |
+| `OmDataList` | recent sessions (`rows`), logbook (`table`, 25 per page) | hand-built list and table |
+| `themes/lupine.css` | `styles.css` | the hex palette in `@theme` and the `.dark` block |
+
+Tailwind's `@theme inline` names (`bg-primary`, `text-muted`, …) are aliases onto
+the library's `--om-*` tokens, so there is one palette. The split chart uses
+`format="clock"` (added in library 0.3.0) so its axis reads `2:50`, not `170`.
+
+The theme preference moved from `split-log-theme` to the shared `om-theme`;
+the boot script carries an existing choice over once.
+
+`package.json` pins the library to a commit. To take a newer release, change the
+ref at the end of the `@omarchy/ui` entry and run `npm install`.
+
 ## Run locally
 
 ```bash

@@ -7,7 +7,7 @@ import { shareWorkoutPayload } from "@/lib/share";
 export function SessionRow({ workout }: { workout: Workout }) {
   const split = inferredSplit(workout);
   return (
-    <article className="flex items-center justify-between gap-3 border-b border-border/80 py-3 last:border-0">
+    <article className="flex items-center justify-between gap-3">
       <div className="min-w-0">
         <p className="truncate font-medium">{workout.description}</p>
         <p className="text-xs text-muted">

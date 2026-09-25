@@ -3,12 +3,15 @@ import { Toaster } from "sonner";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { noFlashScript, THEME_KEY } from "@omarchy/ui/core";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "Split Log";
 
-const THEME_BOOT =
-  '(function(){try{var t=localStorage.getItem("split-log-theme");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);document.documentElement.style.colorScheme=d?"dark":"light";}catch(e){}})();';
+// Sets .dark/.light on <html> before first paint. The legacy key carries a
+// choice saved under this app's old "split-log-theme" over to the shared
+// "om-theme", so nobody's light/dark preference resets.
+const THEME_BOOT = noFlashScript(THEME_KEY, "split-log-theme");
 
 export const Route = createRootRoute({
   head: () => ({

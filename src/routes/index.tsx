@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowDownRight, ArrowUpRight, Timer } from "lucide-react";
+import { Timer } from "lucide-react";
+import { OmDataList, OmStat, OmStatGrid } from "@omarchy/ui/react";
 import { AppShell } from "@/components/app-shell";
 import { DistanceChart, SplitTrendChart, WeeklyVolumeChart } from "@/components/charts";
 import { MeterHeatmap } from "@/components/heatmap";
@@ -65,37 +66,27 @@ function Home() {
           </div>
         )}
 
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat
+        <OmStatGrid cols={2} colsSm={4}>
+          <OmStat
             label="This week"
-            value={formatMetersFull(stats.weekMeters)}
-            hint={
-              <span className="inline-flex items-center gap-1">
-                {weekDelta >= 0 ? (
-                  <ArrowUpRight className="size-3.5" />
-                ) : (
-                  <ArrowDownRight className="size-3.5" />
-                )}
-                {formatMetersFull(Math.abs(weekDelta))} vs last week
-              </span>
-            }
-          />
-          <Stat
-            label="7-day split"
-            value={formatSplit(stats.avgSplit7)}
-            hint="/500m average"
-          />
-          <Stat
-            label="Season meters"
-            value={formatMetersFull(stats.totalMeters)}
-            hint={`${stats.totalSessions} sessions`}
-          />
-          <Stat
-            label="Week streak"
-            value={String(stats.streakWeeks)}
-            hint="weeks with 2+ sessions"
-          />
-        </section>
+            value={stats.weekMeters}
+            format="locale"
+            unit="m"
+            delta={weekDelta}
+            deltaFormat="locale"
+          >
+            <StatNote>vs last week</StatNote>
+          </OmStat>
+          <OmStat label="7-day split" value={formatSplit(stats.avgSplit7)} unit="/500m">
+            <StatNote>average, last 7 days</StatNote>
+          </OmStat>
+          <OmStat label="Season meters" value={stats.totalMeters} format="locale" unit="m">
+            <StatNote>{stats.totalSessions} sessions</StatNote>
+          </OmStat>
+          <OmStat label="Week streak" value={stats.streakWeeks}>
+            <StatNote>weeks with 2+ sessions</StatNote>
+          </OmStat>
+        </OmStatGrid>
 
         {last && (
           <Card>
@@ -124,35 +115,11 @@ function Home() {
         )}
 
         <section className="grid gap-4 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Weekly volume</CardTitle>
-              <CardDescription>Kilometers on the erg, Monday weeks</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <WeeklyVolumeChart weekly={stats.weekly} />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Split trend</CardTitle>
-              <CardDescription>Average /500m on pieces 2k and up — lower is faster</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SplitTrendChart workouts={workouts} />
-            </CardContent>
-          </Card>
+          <WeeklyVolumeChart weekly={stats.weekly} />
+          <SplitTrendChart workouts={workouts} />
         </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Distance per session</CardTitle>
-            <CardDescription>Raw meters, every logged row</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DistanceChart workouts={workouts} />
-          </CardContent>
-        </Card>
+        <DistanceChart workouts={workouts} />
 
         <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
           <Card>
@@ -201,7 +168,13 @@ function Home() {
             {recent.length === 0 ? (
               <EmptyLog />
             ) : (
-              recent.map((w) => <SessionRow key={w.id} workout={w} />)
+              <OmDataList
+                items={recent}
+                density="rows"
+                showCount={false}
+                rowKey={(w) => w.id}
+                renderRow={(w) => <SessionRow workout={w} />}
+              />
             )}
           </CardContent>
         </Card>
@@ -210,24 +183,8 @@ function Home() {
   );
 }
 
-function Stat({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint: ReactNode;
-}) {
-  return (
-    <Card>
-      <CardContent className="flex flex-col gap-1 p-5">
-        <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">{label}</p>
-        <p className="font-display text-3xl font-semibold tabular tracking-tight">{value}</p>
-        <p className="text-xs text-muted">{hint}</p>
-      </CardContent>
-    </Card>
-  );
+function StatNote({ children }: { children: ReactNode }) {
+  return <p className="mt-1 text-xs text-muted">{children}</p>;
 }
 
 function pbHeadline(pb: PersonalBest): string {

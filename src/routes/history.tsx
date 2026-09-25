@@ -1,5 +1,6 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { OmDataList } from "@omarchy/ui/react";
 import { AppShell } from "@/components/app-shell";
 import { ShareButton } from "@/components/share-button";
 import { Input } from "@/components/ui/input";
@@ -47,37 +48,34 @@ function HistoryPage() {
           />
         </div>
 
-        <Card className="overflow-hidden">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-sm">
-                <thead className="border-b border-border bg-surface/60 text-xs uppercase tracking-[0.12em] text-muted">
-                  <tr>
-                    <Th>Date</Th>
-                    <Th>Work</Th>
-                    <Th className="text-right">Meters</Th>
-                    <Th className="text-right">Time</Th>
-                    <Th className="text-right">/500m</Th>
-                    <Th className="text-right">SPM</Th>
-                    <Th className="text-right">W</Th>
-                    <Th className="text-right">HR</Th>
-                    <Th className="text-right">Share</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((w) => (
-                    <Row key={w.id} workout={w} />
-                  ))}
-                  {filtered.length === 0 && (
-                    <tr>
-                      <td colSpan={9} className="px-5 py-10 text-center text-muted">
-                        Nothing matches.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+        <Card>
+          <CardContent className="overflow-x-auto p-5 text-sm">
+            {/* Table markup, empty state and paging come from OmDataList; the
+                row cells stay here. `key` sends a new filter back to page 1. */}
+            <OmDataList
+              key={q}
+              className="logbook"
+              items={filtered}
+              density="table"
+              perPage={25}
+              showCount={false}
+              emptyLabel="Nothing matches."
+              rowKey={(w) => w.id}
+              renderRow={(w) => <Row workout={w} />}
+              head={
+                <tr>
+                  <th>Date</th>
+                  <th>Work</th>
+                  <th className="om-num">Meters</th>
+                  <th className="om-num">Time</th>
+                  <th className="om-num">/500m</th>
+                  <th className="om-num">SPM</th>
+                  <th className="om-num">W</th>
+                  <th className="om-num">HR</th>
+                  <th className="om-num">Share</th>
+                </tr>
+              }
+            />
           </CardContent>
         </Card>
       </div>
@@ -85,28 +83,25 @@ function HistoryPage() {
   );
 }
 
-function Th({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <th className={`px-4 py-3 font-medium ${className}`}>{children}</th>;
-}
-
+/** The <td>s only — OmDataList wraps them in its own <tr>. */
 function Row({ workout }: { workout: Workout }) {
   const split = inferredSplit(workout);
   return (
-    <tr className="border-b border-border/70 last:border-0">
-      <td className="px-4 py-3 text-muted">{formatDate(workout.sessionDate)}</td>
-      <td className="px-4 py-3">
+    <>
+      <td className="text-muted">{formatDate(workout.sessionDate)}</td>
+      <td>
         <div className="font-medium">{workout.description}</div>
         {workout.notes ? <div className="text-xs text-muted">{workout.notes}</div> : null}
       </td>
-      <td className="px-4 py-3 text-right tabular">{formatMetersFull(workout.distanceM)}</td>
-      <td className="px-4 py-3 text-right tabular">{formatWorkTime(workout.workSeconds)}</td>
-      <td className="px-4 py-3 text-right tabular">{formatSplit(split)}</td>
-      <td className="px-4 py-3 text-right tabular">{workout.strokeRate ?? "—"}</td>
-      <td className="px-4 py-3 text-right tabular">{workout.watts ?? "—"}</td>
-      <td className="px-4 py-3 text-right tabular">{workout.avgHr ?? "—"}</td>
-      <td className="px-2 py-2 text-right">
+      <td className="om-num">{formatMetersFull(workout.distanceM)}</td>
+      <td className="om-num">{formatWorkTime(workout.workSeconds)}</td>
+      <td className="om-num">{formatSplit(split)}</td>
+      <td className="om-num">{workout.strokeRate ?? "—"}</td>
+      <td className="om-num">{workout.watts ?? "—"}</td>
+      <td className="om-num">{workout.avgHr ?? "—"}</td>
+      <td className="om-num !py-1">
         <ShareButton payload={shareWorkoutPayload(workout)} label="Share session" iconOnly variant="ghost" />
       </td>
-    </tr>
+    </>
   );
 }
