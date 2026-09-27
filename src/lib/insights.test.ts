@@ -96,6 +96,12 @@ describe("sessionInsights", () => {
     assert.equal(next.best?.sessionDate, "2026-08-27");
   });
 
+  it("knows the furthest any earlier row went", () => {
+    assert.equal(sessionInsights(bySlug("2026-09-25"), season).furthestBefore, 4474);
+    assert.equal(sessionInsights(bySlug("2026-09-09"), season).furthestBefore, 3627);
+    assert.equal(sessionInsights(bySlug("2026-05-05"), season).furthestBefore, 0);
+  });
+
   it("marks a new best", () => {
     const got = sessionInsights(bySlug("2026-08-27"), season);
     assert.equal(got.verdict?.isPb, true);
