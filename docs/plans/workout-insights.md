@@ -1,6 +1,6 @@
 # Plan: Workout insights and the mock row map
 
-Status: proposal · 2026-09-27
+Status: accepted · 2026-09-27
 
 Right now the board is a set of season numbers. It never answers the question you
 have after you climb off the erg: **was that a good one?** This plan adds a page for
@@ -95,7 +95,7 @@ A single headline sentence, driven by the split delta against the baseline media
 | --- | --- | --- |
 | ≤ −1.0 s | **Better than usual** | positive |
 | within ±1.0 s | **Right on your normal** | neutral |
-| ≥ +1.0 s | **Off day** | warn, but kind |
+| ≥ +1.0 s | **Building day** | warn, but kind (the board is public) |
 
 The sentence also gives a rank, such as "2nd fastest of 6 comparable rows". A
 PB gets its own badge: "New best for a ~20 min row".
@@ -137,8 +137,8 @@ A small card at the bottom:
 > **Next time:** hold **2:48.7** for 19:47 and you'd row **~3,517 m**, enough to
 > beat today by 12 m. Your best for this length is 2:44.8 (Aug 27).
 
-The target is this workout's split minus 0.5 s, or the baseline median if you
-had an off day. That keeps the next goal a small step within reach, not the PB.
+The target is this workout's split minus 0.5 s, or the baseline median after a
+building day. That keeps the next goal a small step within reach, not the PB.
 
 ### Page layout (mobile first)
 
@@ -217,9 +217,9 @@ show your usual self as a "ghost boat" you beat or didn't.
   layout jump, and the math can be unit-tested.
 - A single `<RowMap distance ghostDistance segments />` component in
   `src/components/row-map.tsx`.
-- Motion: on load, the wake draws in from 0 to the finish with
-  `stroke-dashoffset` over about 1.2 s. The boat slides along it. Honor
-  `prefers-reduced-motion` by skipping the animation.
+- Motion: the map is a **self-looping animation** (see section 4a). Your
+  boat and the ghost row the course over and over at their relative paces,
+  so the gap between them opens up as you watch.
 - Accessibility: `role="img"` plus an `aria-label` with the same caption text.
 
 ### Later (not v1)
@@ -241,14 +241,18 @@ meters logged move a boat along a long real-world route, for example **Toronto
 to Kingston along Lake Ontario (~260 km)**, with towns as milestones (Oshawa,
 Cobourg, Belleville…). The home page gets a strip showing "31.5 km logged, next
 stop: Pickering, 7 km away". It uses the same `pointAtDistance` code as Feature B.
+The strip is a **self-looping animation**: the boat sails from Toronto to its
+current spot, and each town it passes lights up. It rests there for a moment,
+then starts over.
 When a new row crosses a town, the session page shows "You reached Pickering 🎉".
 Friends and family viewing the public board get an easy story to follow.
 
 ### Idea 2: Race your past self (ghost replay)
 
 On the session page, choose any other workout, such as your best or last week's
-row, to use as the ghost instead of "usual you". Hit play and both boats race
-across the mock map in a 10-second time-lapse. The replay uses segment splits
+row, to use as the ghost instead of "usual you". Both boats race across the
+mock map in a **self-looping** 10-second time-lapse. There is no play button:
+the race just keeps running, and picking a different rival restarts it. The replay uses segment splits
 when available and even pacing otherwise. It ends on a margin: "Beat Aug 27 by
 —" or "Aug 27 wins by 95 m". This reuses Feature A's `ghostGapMeters` and
 Feature B's map, so most of the work is already done.
@@ -270,27 +274,74 @@ the best session of the week.
 
 ---
 
+## 4a. Self-looping boat animations
+
+The mock map, the ghost race, and the season voyage all use one looping
+animation. Each is a small, quiet scene that plays on its own, like a GIF, with
+nothing to press.
+
+**One loop:**
+
+1. Boats start at 0 and row along the course. The wake draws in behind them.
+2. Speed follows real pacing: each boat's speed through a segment matches its
+   split for that segment. With no segment data, speed is even. A time-lapse
+   maps the whole row onto about **8 s** (voyage: about 10 s).
+3. At the finish, the boats hold for **1.5 s**. The margin label appears ("+44 m
+   vs usual you"), and a ripple pulses at the finish point.
+4. The wake fades out over 0.5 s and the loop starts again.
+
+Small touches that make it feel alive without being noisy: a gentle bob (±1 px),
+oar strokes shown as a tick that pulses at the workout's stroke rate (sped up to
+match the time-lapse), and buoys that brighten briefly as a boat passes.
+
+**Implementation:**
+
+- A shared `useCourseLoop({ racers, durationMs, holdMs })` hook in
+  `src/components/course-loop.ts`. It returns each racer's distance at the
+  current frame. `RowMap`, the race view, and the voyage strip only draw.
+- Driven by `requestAnimationFrame`, using `pointAtDistance` for positions. We
+  don't use CSS `offset-path` because it can't vary speed by segment and
+  behaves unevenly inside SVG.
+- **Cheap when idle:** an `IntersectionObserver` pauses the loop when it is
+  scrolled off screen, and it also pauses when the tab is hidden
+  (`visibilitychange`).
+- **`prefers-reduced-motion`:** no loop. Show the finished frame with the
+  margin label.
+- The server renders the finished frame, so the page never flashes empty
+  before JS loads. The loop takes over once the page is interactive.
+- Timing math (distance at time *t* over pace segments) is a pure function,
+  `distanceAt(segments, t)`, in `src/lib/course.ts` and gets its own tests.
+
+---
+
 ## 5. Phasing
 
 | Phase | Scope | Size |
 | --- | --- | --- |
 | 1 | Stable slugs; `insights.ts` with tests; `/session/$slug` with verdict, delta stats, and next-time card; links from home, logbook, and share | M |
 | 2 | Notes segment parser, segment bars, fade and evenness | S |
-| 3 | `course.ts` + `RowMap`: wake, buoys, landmarks, ghost boat, draw-in animation | M |
-| 4 | Idea 2: ghost replay (builds on 1 and 3) | S |
+| 3 | `course.ts` + `useCourseLoop` + `RowMap`: wake, buoys, landmarks, ghost boat, self-looping animation | M |
+| 4 | Idea 2: looping ghost race with rival picker (builds on 1 and 3) | S |
 | 5 | Idea 3: badges, then the weekly push | S–M |
-| 6 | Idea 1: season voyage strip on the home page | M |
+| 6 | Idea 1: looping season voyage strip on the home page | M |
 
 Phases 1 to 3 deliver what was asked. Each phase can ship on its own.
 
-## 6. Open questions
+## 6. Decisions
 
-- **Baseline window:** is "last 8 comparable" right, or should it be "last 60
-  days"? With the current sparse log (gaps of 2 months), a count window is
-  steadier.
-- **Verdict threshold:** is ±1.0 s/500m the right line for "normal"? On ~20 min
-  rows that is about 20 m. We could use ±0.5 s so the verdict moves more often.
-- **Public tone:** the board is public. Should "Off day" read softer, for example
-  "Building day", since friends can see it?
-- **Structured splits:** should we add a `Splits` column to the CSV now, or
-  keep parsing notes until the format drifts?
+These were open questions in the first draft. They are now settled.
+
+- **Baseline window: last 8 comparable rows**, not a date window. The log has
+  gaps of up to 2 months, and a 60-day window would often be empty or hold just
+  one row. A count window always has something to compare against.
+- **"Normal" band: ±1.0 s/500m.** That is about 20 m on a ~20 min row. Your
+  usual rows already vary by about that much (Aug 7 at 2:51.9 against Aug 18 at
+  2:51.4), so a tighter band would call noise "better" or "worse". We can tighten
+  it once the log is longer.
+- **Tone: "Building day"** replaces "Off day". The board is public, and the label
+  should still motivate on a slow day. The next-time card sets a reachable target
+  for the next row.
+- **Splits stay in notes for now.** The `N-min splits a / b / c m` format is
+  consistent across the log, and one parser covers it. We will add a `Splits`
+  column only if the notes format starts to drift. The parser would then read
+  the column first and fall back to notes.
