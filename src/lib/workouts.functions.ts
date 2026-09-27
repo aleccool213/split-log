@@ -8,10 +8,14 @@ import {
   isLoginRequired,
 } from "@/lib/app-data";
 import { loadFileSettings } from "@/lib/settings-file";
+import { notFound } from "@tanstack/react-router";
+import { sessionInsights } from "@/lib/insights";
 import {
   buildStats,
+  byLogOrder,
   SHEET_NAME,
   toNumber,
+  withSlugs,
   type LogSettings,
   type Workout,
 } from "@/lib/workouts";
@@ -41,7 +45,7 @@ type SettingsRow = {
   last_nudge_at: string | Date | null;
 };
 
-function mapWorkout(row: WorkoutRow): Workout {
+function mapWorkout(row: WorkoutRow): Omit<Workout, "slug"> {
   const split = toNumber(row.split_seconds);
   return {
     id: row.id,
@@ -92,7 +96,7 @@ async function loadWorkouts(): Promise<Workout[]> {
     from workouts
     order by session_date desc, id desc
   `;
-  return rows.map(mapWorkout);
+  return withSlugs(rows.map(mapWorkout));
 }
 
 async function loadSettings(): Promise<LogSettings> {
@@ -134,6 +138,24 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async () =
     stats: buildStats(workouts, settings),
   };
 });
+
+export const getWorkout = createServerFn({ method: "GET" })
+  .validator((slug: string) => {
+    if (typeof slug !== "string" || !/^\d{4}-\d{2}-\d{2}(-\d+)?$/.test(slug)) throw notFound();
+    return slug;
+  })
+  .handler(async ({ data: slug }) => {
+    const workouts = (await loadWorkouts()).sort(byLogOrder);
+    const i = workouts.findIndex((w) => w.slug === slug);
+    if (i === -1) throw notFound();
+    const workout = workouts[i];
+    return {
+      workout,
+      insights: sessionInsights(workout, workouts),
+      prevSlug: workouts[i - 1]?.slug ?? null,
+      nextSlug: workouts[i + 1]?.slug ?? null,
+    };
+  });
 
 function looksLikeEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);

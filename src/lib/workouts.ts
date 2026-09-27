@@ -5,7 +5,7 @@ import {
   splitFromWork,
   todayISO,
   wattsFromSplit,
-} from "./format";
+} from "./format.ts";
 
 export const SHEET_NAME = "Split Log — Concept 2";
 export const LOCAL_LOG_FILE = "data/split-log.csv";
@@ -13,6 +13,8 @@ export const TZ = "America/Toronto";
 
 export type Workout = {
   id: number;
+  /** Stable URL key: the date, plus `-2`, `-3`… for later rows on the same day. */
+  slug: string;
   sourceKey: string;
   sessionDate: string;
   description: string;
@@ -84,6 +86,27 @@ export function inferredWatts(w: Workout): number | null {
   if (w.watts && w.watts > 0) return w.watts;
   const split = inferredSplit(w);
   return split ? wattsFromSplit(split) : null;
+}
+
+/** Oldest first; same-day rows keep log order (file order in CSV mode, insert order in Neon). */
+export function byLogOrder(a: Pick<Workout, "sessionDate" | "id">, b: Pick<Workout, "sessionDate" | "id">): number {
+  return a.sessionDate === b.sessionDate ? a.id - b.id : a.sessionDate < b.sessionDate ? -1 : 1;
+}
+
+/**
+ * Gives every workout its date slug. IDs are unfit for URLs because CSV-mode
+ * IDs are row positions and shift when a row is inserted out of order; the
+ * date only moves if the row itself is edited.
+ */
+export function withSlugs<T extends Omit<Workout, "slug">>(workouts: T[]): (T & { slug: string })[] {
+  const perDay = new Map<string, number>();
+  const slugs = new Map<T, string>();
+  for (const w of [...workouts].sort(byLogOrder)) {
+    const n = (perDay.get(w.sessionDate) ?? 0) + 1;
+    perDay.set(w.sessionDate, n);
+    slugs.set(w, n === 1 ? w.sessionDate : `${w.sessionDate}-${n}`);
+  }
+  return workouts.map((w) => ({ ...w, slug: slugs.get(w)! }));
 }
 
 function bestBySplit(workouts: Workout[]): Workout | null {

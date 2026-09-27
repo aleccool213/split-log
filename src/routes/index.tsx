@@ -94,7 +94,13 @@ function Home() {
               <div>
                 <CardDescription>Last session</CardDescription>
                 <CardTitle className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span>{last.description}</span>
+                  <Link
+                    to="/session/$slug"
+                    params={{ slug: last.slug }}
+                    className="underline-offset-4 hover:underline"
+                  >
+                    {last.description}
+                  </Link>
                   <span className="font-sans text-base font-medium text-muted">
                     {formatDateLong(last.sessionDate)}
                   </span>

@@ -20,6 +20,11 @@ export function shareBoardPayload(): SharePayload {
   };
 }
 
+export function sessionUrl(workout: Pick<Workout, "slug">): string {
+  if (typeof window === "undefined") return "";
+  return `${window.location.origin}/session/${workout.slug}`;
+}
+
 export function shareWorkoutPayload(workout: Workout): SharePayload {
   const split = inferredSplit(workout);
   const bits = [
@@ -33,7 +38,7 @@ export function shareWorkoutPayload(workout: Workout): SharePayload {
   return {
     title: `${workout.description} — Alec Brunelle’s rowing tracker`,
     text: `Alec Brunelle’s rowing tracker\n${formatDate(workout.sessionDate)}\n${line}`,
-    url: boardUrl(),
+    url: sessionUrl(workout),
   };
 }
 

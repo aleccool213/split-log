@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SessionSlugRouteImport } from './routes/session.$slug'
+import { Route as ApiCronRemindRouteImport } from './routes/api/cron/remind'
 import { Route as ApiCronSyncRouteImport } from './routes/api/cron/sync'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +31,16 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SessionSlugRoute = SessionSlugRouteImport.update({
+  id: '/session/$slug',
+  path: '/session/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronRemindRoute = ApiCronRemindRouteImport.update({
+  id: '/api/cron/remind',
+  path: '/api/cron/remind',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCronSyncRoute = ApiCronSyncRouteImport.update({
   id: '/api/cron/sync',
   path: '/api/cron/sync',
@@ -39,12 +51,16 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
   '/settings': typeof SettingsRoute
+  '/session/$slug': typeof SessionSlugRoute
+  '/api/cron/remind': typeof ApiCronRemindRoute
   '/api/cron/sync': typeof ApiCronSyncRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
   '/settings': typeof SettingsRoute
+  '/session/$slug': typeof SessionSlugRoute
+  '/api/cron/remind': typeof ApiCronRemindRoute
   '/api/cron/sync': typeof ApiCronSyncRoute
 }
 export interface FileRoutesById {
@@ -52,20 +68,43 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/history': typeof HistoryRoute
   '/settings': typeof SettingsRoute
+  '/session/$slug': typeof SessionSlugRoute
+  '/api/cron/remind': typeof ApiCronRemindRoute
   '/api/cron/sync': typeof ApiCronSyncRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/history' | '/settings' | '/api/cron/sync'
+  fullPaths:
+    | '/'
+    | '/history'
+    | '/settings'
+    | '/session/$slug'
+    | '/api/cron/remind'
+    | '/api/cron/sync'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/history' | '/settings' | '/api/cron/sync'
-  id: '__root__' | '/' | '/history' | '/settings' | '/api/cron/sync'
+  to:
+    | '/'
+    | '/history'
+    | '/settings'
+    | '/session/$slug'
+    | '/api/cron/remind'
+    | '/api/cron/sync'
+  id:
+    | '__root__'
+    | '/'
+    | '/history'
+    | '/settings'
+    | '/session/$slug'
+    | '/api/cron/remind'
+    | '/api/cron/sync'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HistoryRoute: typeof HistoryRoute
   SettingsRoute: typeof SettingsRoute
+  SessionSlugRoute: typeof SessionSlugRoute
+  ApiCronRemindRoute: typeof ApiCronRemindRoute
   ApiCronSyncRoute: typeof ApiCronSyncRoute
 }
 
@@ -92,6 +131,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/session/$slug': {
+      id: '/session/$slug'
+      path: '/session/$slug'
+      fullPath: '/session/$slug'
+      preLoaderRoute: typeof SessionSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/remind': {
+      id: '/api/cron/remind'
+      path: '/api/cron/remind'
+      fullPath: '/api/cron/remind'
+      preLoaderRoute: typeof ApiCronRemindRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/cron/sync': {
       id: '/api/cron/sync'
       path: '/api/cron/sync'
@@ -106,6 +159,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HistoryRoute: HistoryRoute,
   SettingsRoute: SettingsRoute,
+  SessionSlugRoute: SessionSlugRoute,
+  ApiCronRemindRoute: ApiCronRemindRoute,
   ApiCronSyncRoute: ApiCronSyncRoute,
 }
 export const routeTree = rootRouteImport

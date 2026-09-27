@@ -7,10 +7,10 @@ import {
   splitFromWork,
   wattsFromSplit,
 } from "@/lib/format";
-import { LOCAL_LOG_FILE, sourceKeyFor, toNumber, type Workout } from "@/lib/workouts";
+import { LOCAL_LOG_FILE, sourceKeyFor, toNumber, withSlugs, type Workout } from "@/lib/workouts";
 import localCsv from "../../data/split-log.csv?raw";
 
-export type SheetWorkout = Omit<Workout, "id">;
+export type SheetWorkout = Omit<Workout, "id" | "slug">;
 
 export type SyncResult =
   | { ok: true; imported: number; fileName: string; skipped?: false }
@@ -65,8 +65,7 @@ export function parseSheetRows(csv: string): SheetWorkout[] {
 }
 
 export function loadCsvWorkouts(csv: string = localCsv): Workout[] {
-  return parseSheetRows(csv)
-    .map((row, i) => ({ ...row, id: i + 1 }))
+  return withSlugs(parseSheetRows(csv).map((row, i) => ({ ...row, id: i + 1 })))
     .sort((a, b) =>
       a.sessionDate === b.sessionDate ? b.id - a.id : a.sessionDate < b.sessionDate ? 1 : -1,
     );

@@ -24,3 +24,6 @@ artifacts/
 
 # Materialized from scripts/og-card.b64 by `npm run og`
 public/og.png
+
+# TanStack Router dev-server scratch
+.tanstack/
