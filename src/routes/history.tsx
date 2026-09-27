@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { OmDataList } from "@omarchy/ui/react";
 import { AppShell } from "@/components/app-shell";
 import { ShareButton } from "@/components/share-button";
@@ -90,7 +90,13 @@ function Row({ workout }: { workout: Workout }) {
     <>
       <td className="text-muted">{formatDate(workout.sessionDate)}</td>
       <td>
-        <div className="font-medium">{workout.description}</div>
+        <Link
+          to="/session/$slug"
+          params={{ slug: workout.slug }}
+          className="font-medium underline-offset-4 hover:underline"
+        >
+          {workout.description}
+        </Link>
         {workout.notes ? <div className="text-xs text-muted">{workout.notes}</div> : null}
       </td>
       <td className="om-num">{formatMetersFull(workout.distanceM)}</td>

@@ -63,7 +63,8 @@ fitter you.
 Comparable means, in priority order:
 
 1. **Same workout name** (such as `2,000m test` or `8x500m/1:00r`), if there are
-   at least 3 earlier ones.
+   at least 3 earlier ones. "Just Row" names no fixed piece (its rows run from
+   14 to 26 minutes), so it always uses the length rule below.
 2. Otherwise, a **similar length**: work time within ±20% of this one. A 19:47
    row compares with 16–24 minute rows.
 3. Use at most the **last 8** comparable rows, so "normal" follows your
@@ -318,7 +319,7 @@ match the time-lapse), and buoys that brighten briefly as a boat passes.
 
 | Phase | Scope | Size |
 | --- | --- | --- |
-| 1 | Stable slugs; `insights.ts` with tests; `/session/$slug` with verdict, delta stats, and next-time card; links from home, logbook, and share | M |
+| 1 ✅ | Stable slugs; `insights.ts` with tests; `/session/$slug` with verdict, delta stats, and next-time card; links from home, logbook, and share | M |
 | 2 | Notes segment parser, segment bars, fade and evenness | S |
 | 3 | `course.ts` + `useCourseLoop` + `RowMap`: wake, buoys, landmarks, ghost boat, self-looping animation | M |
 | 4 | Idea 2: looping ghost race with rival picker (builds on 1 and 3) | S |

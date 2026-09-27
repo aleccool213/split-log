@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { formatDate, formatMetersFull, formatSplit, formatWorkTime } from "@/lib/format";
 import type { Workout } from "@/lib/workouts";
 import { inferredSplit } from "@/lib/workouts";
@@ -9,7 +10,13 @@ export function SessionRow({ workout }: { workout: Workout }) {
   return (
     <article className="flex items-center justify-between gap-3">
       <div className="min-w-0">
-        <p className="truncate font-medium">{workout.description}</p>
+        <Link
+          to="/session/$slug"
+          params={{ slug: workout.slug }}
+          className="block truncate font-medium underline-offset-4 hover:underline"
+        >
+          {workout.description}
+        </Link>
         <p className="text-xs text-muted">
           {formatDate(workout.sessionDate)}
           {workout.notes ? ` · ${workout.notes}` : ""}
