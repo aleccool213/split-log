@@ -320,7 +320,7 @@ match the time-lapse), and buoys that brighten briefly as a boat passes.
 | Phase | Scope | Size |
 | --- | --- | --- |
 | 1 ✅ | Stable slugs; `insights.ts` with tests; `/session/$slug` with verdict, delta stats, and next-time card; links from home, logbook, and share | M |
-| 2 | Notes segment parser, segment bars, fade and evenness | S |
+| 2 ✅ | Notes segment parser, segment bars, fade and evenness | S |
 | 3 | `course.ts` + `useCourseLoop` + `RowMap`: wake, buoys, landmarks, ghost boat, self-looping animation | M |
 | 4 | Idea 2: looping ghost race with rival picker (builds on 1 and 3) | S |
 | 5 | Idea 3: badges, then the weekly push | S–M |

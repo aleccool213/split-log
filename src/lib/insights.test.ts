@@ -4,6 +4,8 @@ import {
   comparableWorkouts,
   ghostGapMeters,
   nextTarget,
+  pacing,
+  parseSegments,
   sessionInsights,
   type Baseline,
 } from "./insights.ts";
@@ -177,5 +179,80 @@ describe("ghostGapMeters / nextTarget", () => {
   it("returns null when the row has no time", () => {
     const [w] = log([["2026-09-01", "Just Row", 0, 2400, 125]]);
     assert.equal(nextTarget(w, base, []), null);
+  });
+});
+
+describe("parseSegments", () => {
+  it("reads 5-min splits, with the last segment covering the leftover time", () => {
+    const segs = parseSegments("5-min splits 862 / 908 / 875 / 861 m", 1187, 3505)!;
+    assert.deepEqual(
+      segs.map((s) => [s.startSeconds, s.seconds, s.meters, s.partial]),
+      [
+        [0, 300, 862, false],
+        [300, 300, 908, false],
+        [600, 300, 875, false],
+        [900, 287, 861, true],
+      ],
+    );
+    assert.ok(Math.abs(segs[0].split - 174.0) < 0.05);
+    // 861 m in 4:47 is quicker than any full segment.
+    assert.ok(Math.abs(segs[3].split - 166.7) < 0.05);
+  });
+
+  it("handles a three-segment row (May 5, 14:31)", () => {
+    const segs = parseSegments("5-min splits 836 / 849 / 750 m", 871, 2434)!;
+    assert.equal(segs.length, 3);
+    assert.equal(segs[2].seconds, 271);
+    assert.equal(segs[2].partial, true);
+  });
+
+  it("treats a last segment of full length as full", () => {
+    const segs = parseSegments("5-min splits 800 / 800 m", 600, 1600)!;
+    assert.equal(segs[1].partial, false);
+  });
+
+  it("ignores notes without splits", () => {
+    assert.equal(parseSegments("PM showed 3:25 /500m at the end (live split)", 1559, 4474), null);
+    assert.equal(parseSegments("", 1187, 3505), null);
+  });
+
+  it("rejects splits that don't match the row", () => {
+    // Four 5-min segments can't fit in 12 minutes.
+    assert.equal(parseSegments("5-min splits 862 / 908 / 875 / 861 m", 720, 3505), null);
+    // Two segments can't cover a 19:47 row.
+    assert.equal(parseSegments("5-min splits 862 / 908 m", 1187, 3505), null);
+    // Meters far off the logged distance.
+    assert.equal(parseSegments("5-min splits 862 / 908 / 875 / 861 m", 1187, 5000), null);
+  });
+});
+
+describe("pacing", () => {
+  it("scores Sep 25 as a negative split with steady pacing", () => {
+    const p = pacing(parseSegments("5-min splits 862 / 908 / 875 / 861 m", 1187, 3505)!)!;
+    assert.ok(p.fade < 0, "finished faster than it started");
+    assert.equal(p.evenness, "steady");
+    assert.ok(Math.abs(p.split - (1187 / 3506) * 500) < 1e-9);
+  });
+
+  it("scores Aug 7 as even", () => {
+    const p = pacing(parseSegments("5-min splits 872 / 864 / 871 / 865 m", 1193, 3470)!)!;
+    assert.equal(p.evenness, "even");
+  });
+
+  it("measures a fade on Aug 18", () => {
+    const p = pacing(parseSegments("5-min splits 886 / 854 / 899 / 721 m", 1152, 3360)!)!;
+    assert.ok(Math.abs(p.fade - 0.0326) < 0.001);
+  });
+
+  it("feeds sessionInsights", () => {
+    const row = {
+      ...bySlug("2026-09-25"),
+      workSeconds: 1187,
+      notes: "5-min splits 862 / 908 / 875 / 861 m",
+    };
+    const got = sessionInsights(row, season);
+    assert.equal(got.segments?.length, 4);
+    assert.equal(got.pacing?.evenness, "steady");
+    assert.equal(sessionInsights(bySlug("2026-09-25"), season).segments, null);
   });
 });

@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { OmStat, OmStatGrid } from "@omarchy/ui/react";
 import { AppShell } from "@/components/app-shell";
+import { PacingCard } from "@/components/pacing-card";
 import { ShareButton } from "@/components/share-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -124,6 +125,14 @@ function SessionPage() {
             )}
           </OmStat>
         </OmStatGrid>
+
+        {insights.segments && insights.pacing && (
+          <PacingCard
+            segments={insights.segments}
+            pacing={insights.pacing}
+            usualSplit={base?.split ?? null}
+          />
+        )}
 
         <section className="grid items-start gap-4 lg:grid-cols-[0.9fr_1.1fr]">
           {insights.next && <NextTimeCard workout={workout} next={insights.next} />}
