@@ -252,13 +252,16 @@ Friends and family viewing the public board get an easy story to follow.
 
 ### Idea 2: Race your past self (ghost replay)
 
-On the session page, choose any other workout, such as your best or last week's
-row, to use as the ghost instead of "usual you". Both boats race across the
-mock map in a **self-looping** 10-second time-lapse. There is no play button:
-the race just keeps running, and picking a different rival restarts it. The replay uses segment splits
-when available and even pacing otherwise. It ends on a margin: "Beat Aug 27 by
-—" or "Aug 27 wins by 95 m". This reuses Feature A's `ghostGapMeters` and
-Feature B's map, so most of the work is already done.
+On the session page, a **Race against** picker on the map chooses the ghost:
+usual you (the default), your best row of a similar length, the row before this
+one, then every other row, newest first. Both boats race across the mock map in
+the same self-looping time-lapse, and picking a different rival restarts it.
+Each boat follows its own logged splits, or an even pace without them.
+
+The race lasts as long as the **shorter** of the two rows, so neither boat is
+ever extrapolated past what was actually rowed. It ends on a margin: "You beat
+Sep 15 by 2 m over the first 19:17" or "Aug 27 wins by 95 m". The logic lives in
+`src/lib/race.ts`.
 
 ### Idea 3: Pacing badges and weekly check-in
 
@@ -326,7 +329,7 @@ match the time-lapse), and buoys that brighten briefly as a boat passes.
 | 1 ✅ | Stable slugs; `insights.ts` with tests; `/session/$slug` with verdict, delta stats, and next-time card; links from home, logbook, and share | M |
 | 2 ✅ | Notes segment parser, segment bars, fade and evenness | S |
 | 3 ✅ | `course.ts` + `useCourseLoop` + `RowMap`: wake, buoys, landmarks, ghost boat, self-looping animation | M |
-| 4 | Idea 2: looping ghost race with rival picker (builds on 1 and 3) | S |
+| 4 ✅ | Idea 2: looping ghost race with rival picker (builds on 1 and 3) | S |
 | 5 | Idea 3: badges, then the weekly push | S–M |
 | 6 | Idea 1: looping season voyage strip on the home page | M |
 

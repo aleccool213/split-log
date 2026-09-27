@@ -43,7 +43,7 @@ const BADGE: Record<VerdictTone, "primary" | "outline" | "warn"> = {
 };
 
 function SessionPage() {
-  const { workout, insights, prevSlug, nextSlug } = Route.useLoaderData();
+  const { workout, insights, rivals, prevSlug, nextSlug } = Route.useLoaderData();
   const { baseline: base, verdict } = insights;
   const split = inferredSplit(workout);
   const watts = inferredWatts(workout);
@@ -131,7 +131,7 @@ function SessionPage() {
           distanceM={workout.distanceM}
           workSeconds={workout.workSeconds}
           segments={insights.segments}
-          usualSplit={base?.split ?? null}
+          rivals={rivals}
           furthestBefore={insights.furthestBefore}
         />
 

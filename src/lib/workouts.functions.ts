@@ -10,6 +10,7 @@ import {
 import { loadFileSettings } from "@/lib/settings-file";
 import { notFound } from "@tanstack/react-router";
 import { sessionInsights } from "@/lib/insights";
+import { raceRivals } from "@/lib/race";
 import {
   buildStats,
   byLogOrder,
@@ -149,9 +150,11 @@ export const getWorkout = createServerFn({ method: "GET" })
     const i = workouts.findIndex((w) => w.slug === slug);
     if (i === -1) throw notFound();
     const workout = workouts[i];
+    const insights = sessionInsights(workout, workouts);
     return {
       workout,
-      insights: sessionInsights(workout, workouts),
+      insights,
+      rivals: raceRivals(workout, workouts, insights.baseline),
       prevSlug: workouts[i - 1]?.slug ?? null,
       nextSlug: workouts[i + 1]?.slug ?? null,
     };
@@ -209,7 +212,12 @@ export const sendNudge = createServerFn({ method: "POST" }).handler(async () => 
       { connectorType: ConnectorType.GoogleCalendar },
     );
     if (isLoginRequired(cal)) {
-      return { ok: false as const, loginRequired: true, loginUrl: cal.loginUrl, error: cal.errorMessage };
+      return {
+        ok: false as const,
+        loginRequired: true,
+        loginUrl: cal.loginUrl,
+        error: cal.errorMessage,
+      };
     }
     to = emailFromUnknown(cal.data) ?? "";
     if (!to) {
@@ -225,7 +233,8 @@ export const sendNudge = createServerFn({ method: "POST" }).handler(async () => 
 
   const days = stats.daysSince;
   const last = stats.lastWorkout;
-  const subject = days == null ? "Time to row — Split Log" : `Day ${days} off the water — Split Log`;
+  const subject =
+    days == null ? "Time to row — Split Log" : `Day ${days} off the water — Split Log`;
   const lastLine = last
     ? `Last session: ${last.sessionDate} · ${last.description} · ${last.distanceM.toLocaleString("en-CA")} m.`
     : "The log is empty — first session of the block is the hardest one to start.";
@@ -248,11 +257,19 @@ export const sendNudge = createServerFn({ method: "POST" }).handler(async () => 
     { connectorType: ConnectorType.Gmail },
   );
   if (isLoginRequired(sent)) {
-    return { ok: false as const, loginRequired: true, loginUrl: sent.loginUrl, error: sent.errorMessage };
+    return {
+      ok: false as const,
+      loginRequired: true,
+      loginUrl: sent.loginUrl,
+      error: sent.errorMessage,
+    };
   }
   if (!sent.ok) {
     const classified = classifyCallToolError(sent);
-    return { ok: false as const, error: classified?.message ?? sent.errorMessage ?? "Gmail could not send." };
+    return {
+      ok: false as const,
+      error: classified?.message ?? sent.errorMessage ?? "Gmail could not send.",
+    };
   }
 
   const sql = await getSql();

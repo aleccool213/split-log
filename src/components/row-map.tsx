@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
 import { Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,8 +19,9 @@ import {
   type Leg,
   type Pose,
 } from "@/lib/course";
-import { formatMetersFull } from "@/lib/format";
+import { formatMetersFull, formatWorkTime } from "@/lib/format";
 import type { Segment } from "@/lib/insights";
+import { race, raceLine, type Rival } from "@/lib/race";
 
 /** Where each landmark's name sits relative to its marker, tuned to the drawn course. */
 const LABELS: Record<string, { dx: number; dy: number; anchor: "start" | "end" }> = {
@@ -39,8 +40,8 @@ type Props = {
   distanceM: number;
   workSeconds: number;
   segments: Segment[] | null;
-  /** Baseline pace; null hides the ghost. */
-  usualSplit: number | null;
+  /** Who the ghost boat can be, in picker order; the first is the default. */
+  rivals: Rival[];
   furthestBefore: number;
 };
 
@@ -51,19 +52,26 @@ function rowLegs(distanceM: number, workSeconds: number, segments: Segment[] | n
   return segments.map((s) => ({ seconds: s.seconds, meters: (s.meters * distanceM) / total }));
 }
 
-export function RowMap({ distanceM, workSeconds, segments, usualSplit, furthestBefore }: Props) {
+export function RowMap({ distanceM, workSeconds, segments, rivals, furthestBefore }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const { frame, paused, togglePaused, calm } = useCourseLoop(ref);
+  const pickerId = useId();
+  const { frame, paused, togglePaused, restart, calm } = useCourseLoop(ref);
+  const [rivalId, setRivalId] = useState(rivals[0]?.id ?? "");
+  const rival = rivals.find((r) => r.id === rivalId) ?? null;
   // Reduced motion keeps the boats moving but drops the bob, oars and ripple.
   const lively = frame.playing && !calm;
 
   const legs = rowLegs(distanceM, workSeconds, segments);
-  const ghostMeters = usualSplit ? (workSeconds / usualSplit) * 500 : null;
-  const t = frame.progress * workSeconds;
+  // The race lasts as long as the shorter row, so both boats row real data.
+  const result = rival ? race(legs, workSeconds, rival.legs, rival.workSeconds) : null;
+  const t = frame.progress * (result?.seconds ?? workSeconds);
   const you = distanceAt(legs, t);
-  const ghost =
-    ghostMeters == null ? null : distanceAt([{ seconds: workSeconds, meters: ghostMeters }], t);
-  const gap = ghostMeters == null ? null : Math.round(distanceM - ghostMeters);
+  const ghost = rival ? distanceAt(rival.legs, t) : null;
+  const gap = result?.gap ?? null;
+  const raceText =
+    result && rival
+      ? raceLine(result, rival, formatWorkTime(result.seconds).replace(/\.0$/, ""))
+      : null;
 
   const fading = frame.phase === "fade" ? 1 - frame.phaseProgress : 1;
   const bob = lively ? Math.sin(frame.clock / 320) * 0.6 : 0;
@@ -79,11 +87,6 @@ export function RowMap({ distanceM, workSeconds, segments, usualSplit, furthestB
     next
       ? `${formatMetersFull(next.meters - lapOf(distanceM).meters)} to ${next.name}`
       : "at the harbour",
-    gap == null
-      ? null
-      : gap === 0
-        ? "level with usual you"
-        : `${formatMetersFull(Math.abs(gap))} ${gap > 0 ? "ahead of" : "behind"} usual you`,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -116,12 +119,34 @@ export function RowMap({ distanceM, workSeconds, segments, usualSplit, furthestB
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
+        {rivals.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <label htmlFor={pickerId} className="text-muted">
+              Race against
+            </label>
+            <select
+              id={pickerId}
+              value={rivalId}
+              onChange={(e) => {
+                setRivalId(e.target.value);
+                restart();
+              }}
+              className="min-w-0 max-w-full flex-1 border border-border bg-card px-2 py-1 text-sm text-fg sm:flex-none"
+            >
+              {rivals.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div ref={ref}>
           <svg
             viewBox={`0 0 ${VIEW.width} ${VIEW.height}`}
             className="mx-auto block h-auto w-full max-w-2xl"
             role="img"
-            aria-label={caption}
+            aria-label={raceText ? `${caption}. ${raceText}.` : caption}
           >
             {/* Harbour basin and river */}
             <ellipse cx={370} cy={46} rx={24} ry={18} fill="var(--om-accent-soft)" />
@@ -229,18 +254,19 @@ export function RowMap({ distanceM, workSeconds, segments, usualSplit, furthestB
         </div>
         <div className="flex flex-col gap-1 text-sm">
           <p>{caption}.</p>
+          {raceText && <p className="font-medium">{raceText}.</p>}
           {fresh.length > 0 && (
             <p className="text-muted">
               First row to reach {fresh.map((l) => l.name).join(" and ")}.
               {next ? ` ${next.name} is next.` : ""}
             </p>
           )}
-          {ghostPose && (
+          {rival && (
             <p className="flex items-center gap-2 text-xs text-muted">
-              <svg viewBox="-9 -5 20 10" className="h-3 w-6" aria-hidden>
+              <svg viewBox="-9 -5 20 10" className="h-3 w-6 shrink-0" aria-hidden>
                 <Hull ghost />
               </svg>
-              Usual you: your median pace for rows like this, in the next lane
+              {rival.detail}, in the next lane
             </p>
           )}
         </div>

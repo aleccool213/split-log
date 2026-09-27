@@ -7,6 +7,8 @@ export type CourseLoop = {
   frame: LoopFrame;
   paused: boolean;
   togglePaused: () => void;
+  /** Back to the start line, e.g. after picking a new rival. */
+  restart: () => void;
   /** The viewer asked for reduced motion: keep the loop, drop the flourishes. */
   calm: boolean;
 };
@@ -25,6 +27,7 @@ export function useCourseLoop(
   const [calm, setCalm] = useState(false);
   const pausedRef = useRef(false);
   const syncRef = useRef<() => void>(() => {});
+  const elapsedRef = useRef(0);
   const { durationMs, holdMs, fadeMs } = options;
 
   useEffect(() => {
@@ -43,13 +46,12 @@ export function useCourseLoop(
     let onScreen = false;
     let raf = 0;
     let last: number | null = null;
-    let elapsed = 0;
 
     const active = () => onScreen && !pausedRef.current && document.visibilityState === "visible";
     const tick = (now: number) => {
-      if (last != null) elapsed += Math.min(now - last, 100);
+      if (last != null) elapsedRef.current += Math.min(now - last, 100);
       last = now;
-      setFrame(frameAt(elapsed, { durationMs, holdMs, fadeMs }));
+      setFrame(frameAt(elapsedRef.current, { durationMs, holdMs, fadeMs }));
       raf = requestAnimationFrame(tick);
     };
     const sync = () => {
@@ -83,5 +85,10 @@ export function useCourseLoop(
     syncRef.current();
   }, []);
 
-  return { frame, paused, togglePaused, calm };
+  const restart = useCallback(() => {
+    elapsedRef.current = 0;
+    setFrame(frameAt(0, { durationMs, holdMs, fadeMs }));
+  }, [durationMs, holdMs, fadeMs]);
+
+  return { frame, paused, togglePaused, restart, calm };
 }
