@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { OmStat, OmStatGrid } from "@omarchy/ui/react";
 import { AppShell } from "@/components/app-shell";
 import { PacingCard } from "@/components/pacing-card";
+import { RowMap } from "@/components/row-map";
 import { ShareButton } from "@/components/share-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -125,6 +126,14 @@ function SessionPage() {
             )}
           </OmStat>
         </OmStatGrid>
+
+        <RowMap
+          distanceM={workout.distanceM}
+          workSeconds={workout.workSeconds}
+          segments={insights.segments}
+          usualSplit={base?.split ?? null}
+          furthestBefore={insights.furthestBefore}
+        />
 
         {insights.segments && insights.pacing && (
           <PacingCard

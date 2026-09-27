@@ -191,9 +191,11 @@ show your usual self as a "ghost boat" you beat or didn't.
   lap the course and show a "Lap 2" chip.
 - **Buoys every 500 m** with small labels (500, 1k, 1.5k …). Rows are about 3.5 km,
   so the buoys give a sense of progress within a single session.
-- A few **named landmarks** at fixed distances, such as "The Narrows" at 2 km,
-  "Boathouse" at 5 km, and "Harbour light" at 10 km. The first time a row reaches
-  one, it gets a small "New water!" note.
+- A few **named landmarks** at fixed distances: Willow Bend (1.5 km), The Narrows
+  (3 km), Stone Bridge (4 km), Boathouse (5 km), Heron Point (7.5 km) and Harbour
+  Light (10 km). They are packed into the first 5 km, where your rows currently
+  end, so there is usually a next one within reach. The first time a row reaches
+  one, it gets a "New water!" chip.
 
 ### What is drawn
 
@@ -306,8 +308,10 @@ match the time-lapse), and buoys that brighten briefly as a boat passes.
 - **Cheap when idle:** an `IntersectionObserver` pauses the loop when it is
   scrolled off screen, and it also pauses when the tab is hidden
   (`visibilitychange`).
-- **`prefers-reduced-motion`:** no loop. Show the finished frame with the
-  margin label.
+- **Always loops**, with a pause/play button on the card (moving content
+  that plays for more than 5 s needs a way to stop it).
+- **`prefers-reduced-motion`:** the boats still row the loop, but without the
+  bob, oar swings or finish ripple.
 - The server renders the finished frame, so the page never flashes empty
   before JS loads. The loop takes over once the page is interactive.
 - Timing math (distance at time *t* over pace segments) is a pure function,
@@ -321,7 +325,7 @@ match the time-lapse), and buoys that brighten briefly as a boat passes.
 | --- | --- | --- |
 | 1 ✅ | Stable slugs; `insights.ts` with tests; `/session/$slug` with verdict, delta stats, and next-time card; links from home, logbook, and share | M |
 | 2 ✅ | Notes segment parser, segment bars, fade and evenness | S |
-| 3 | `course.ts` + `useCourseLoop` + `RowMap`: wake, buoys, landmarks, ghost boat, self-looping animation | M |
+| 3 ✅ | `course.ts` + `useCourseLoop` + `RowMap`: wake, buoys, landmarks, ghost boat, self-looping animation | M |
 | 4 | Idea 2: looping ghost race with rival picker (builds on 1 and 3) | S |
 | 5 | Idea 3: badges, then the weekly push | S–M |
 | 6 | Idea 1: looping season voyage strip on the home page | M |

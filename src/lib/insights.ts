@@ -72,6 +72,8 @@ export type SessionInsights = {
   /** Null when the notes carry no usable splits. */
   segments: Segment[] | null;
   pacing: Pacing | null;
+  /** Longest distance of any earlier row, for "new water" on the course map. */
+  furthestBefore: number;
 };
 
 export type Segment = {
@@ -270,5 +272,8 @@ export function sessionInsights(target: Workout, all: Workout[]): SessionInsight
     next: nextTarget(target, base, comparables),
     segments,
     pacing: segments ? pacing(segments) : null,
+    furthestBefore: all
+      .filter((w) => w.slug !== target.slug && byLogOrder(w, target) < 0)
+      .reduce((max, w) => Math.max(max, w.distanceM), 0),
   };
 }
