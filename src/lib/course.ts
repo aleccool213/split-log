@@ -173,11 +173,11 @@ export type LoopFrame = {
   phaseProgress: number;
   /** Milliseconds the loop has been playing, for bob and oar motion. */
   clock: number;
-  /** False on the server, with reduced motion, and before the first frame. */
+  /** False on the server and before the first animation frame. */
   playing: boolean;
 };
 
-/** The finished picture: what the server renders and what reduced motion keeps. */
+/** The finished picture: what the server renders before the loop starts. */
 export const FINISHED_FRAME: LoopFrame = {
   progress: 1,
   phase: "hold",

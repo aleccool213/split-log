@@ -1,4 +1,6 @@
 import { useRef, type ReactNode } from "react";
+import { Pause, Play } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCourseLoop } from "@/components/course-loop";
 import {
@@ -51,7 +53,9 @@ function rowLegs(distanceM: number, workSeconds: number, segments: Segment[] | n
 
 export function RowMap({ distanceM, workSeconds, segments, usualSplit, furthestBefore }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const frame = useCourseLoop(ref);
+  const { frame, paused, togglePaused, calm } = useCourseLoop(ref);
+  // Reduced motion keeps the boats moving but drops the bob, oars and ripple.
+  const lively = frame.playing && !calm;
 
   const legs = rowLegs(distanceM, workSeconds, segments);
   const ghostMeters = usualSplit ? (workSeconds / usualSplit) * 500 : null;
@@ -62,8 +66,8 @@ export function RowMap({ distanceM, workSeconds, segments, usualSplit, furthestB
   const gap = ghostMeters == null ? null : Math.round(distanceM - ghostMeters);
 
   const fading = frame.phase === "fade" ? 1 - frame.phaseProgress : 1;
-  const bob = frame.playing ? Math.sin(frame.clock / 320) * 0.6 : 0;
-  const oar = frame.playing && frame.phase === "rowing" ? Math.sin(frame.clock / 70) * 28 : 0;
+  const bob = lively ? Math.sin(frame.clock / 320) * 0.6 : 0;
+  const oar = lively && frame.phase === "rowing" ? Math.sin(frame.clock / 70) * 28 : 0;
 
   const { lap } = lapOf(distanceM);
   const past = lastLandmark(distanceM);
@@ -96,9 +100,19 @@ export function RowMap({ distanceM, workSeconds, segments, usualSplit, furthestB
             A mock 10 km course. A kilometre is always the same size.
           </CardDescription>
         </div>
-        <div className="flex shrink-0 flex-wrap justify-end gap-2">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {lap > 0 && <Chip>Lap {lap + 1}</Chip>}
           {fresh.length > 0 && <Chip strong>New water!</Chip>}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            onClick={togglePaused}
+            aria-label={paused ? "Play the row" : "Pause the row"}
+            aria-pressed={paused}
+          >
+            {paused ? <Play className="size-4" /> : <Pause className="size-4" />}
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
@@ -197,7 +211,7 @@ export function RowMap({ distanceM, workSeconds, segments, usualSplit, furthestB
               <Boat pose={youPose} bob={bob} oar={oar} />
             </g>
 
-            {frame.phase !== "rowing" && frame.playing && (
+            {frame.phase !== "rowing" && lively && (
               <circle
                 cx={youPose.x}
                 cy={youPose.y}

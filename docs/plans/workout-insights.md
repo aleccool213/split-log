@@ -308,8 +308,10 @@ match the time-lapse), and buoys that brighten briefly as a boat passes.
 - **Cheap when idle:** an `IntersectionObserver` pauses the loop when it is
   scrolled off screen, and it also pauses when the tab is hidden
   (`visibilitychange`).
-- **`prefers-reduced-motion`:** no loop. Show the finished frame with the
-  margin label.
+- **Always loops**, with a pause/play button on the card (moving content
+  that plays for more than 5 s needs a way to stop it).
+- **`prefers-reduced-motion`:** the boats still row the loop, but without the
+  bob, oar swings or finish ripple.
 - The server renders the finished frame, so the page never flashes empty
   before JS loads. The loop takes over once the page is interactive.
 - Timing math (distance at time *t* over pace segments) is a pure function,
