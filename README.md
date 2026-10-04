@@ -22,6 +22,20 @@ On Vercel with no database, the board **reads this file directly**. A `git push`
 
 A multi-week sample log lives in [`tests/fixtures/split-log.seed.csv`](tests/fixtures/split-log.seed.csv) for local/parser tests. Nothing under `tests/` is imported by the app, so that file is not bundled or shown on the public board.
 
+Lifetime totals live in [`data/lifetime.json`](data/lifetime.json), copied by hand from the PM5 **Summary** screen (Menu → Logbook → Summary). Update the numbers and `asOf` whenever you like; `avgSplit` is the monitor’s "Average time/500m". Meters/workout and time/workout are derived. If the file is missing or malformed, the Lifetime card is hidden.
+
+```json
+{
+  "asOf": "2026-10-04",
+  "lifetimeMeters": 425847,
+  "logbookMeters": 414696,
+  "logbookTime": "42:16:21",
+  "workouts": 225,
+  "avgSplit": "3:03.4",
+  "intervalRestMeters": 11151
+}
+```
+
 Reminder prefs live in [`data/settings.json`](data/settings.json):
 
 ```json

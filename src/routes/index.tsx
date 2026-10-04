@@ -26,7 +26,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { workouts, stats } = Route.useLoaderData();
+  const { workouts, stats, lifetime } = Route.useLoaderData();
   const last = stats.lastWorkout;
   const weekDelta = stats.weekMeters - stats.lastWeekMeters;
   const recent = workouts.slice(0, 6);
@@ -126,6 +126,40 @@ function Home() {
         </section>
 
         <DistanceChart workouts={workouts} />
+
+        {lifetime && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Lifetime</CardTitle>
+              <CardDescription>
+                Every meter on the erg, from the monitor’s own logbook · as of{" "}
+                {formatDateLong(lifetime.asOf)}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-5">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted">
+                  Lifetime meters
+                </p>
+                <p className="font-display text-4xl font-semibold tabular">
+                  {formatMetersFull(lifetime.lifetimeMeters)}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <Mini label="Logbook meters" value={formatMetersFull(lifetime.logbookMeters)} />
+                <Mini label="Logbook time" value={formatWorkTime(lifetime.logbookSeconds)} />
+                <Mini label="Workouts" value={lifetime.workouts.toLocaleString("en-CA")} />
+                <Mini label="Average /500m" value={formatSplit(lifetime.avgSplitSeconds)} />
+                <Mini label="Meters / workout" value={formatMetersFull(lifetime.metersPerWorkout)} />
+                <Mini label="Time / workout" value={formatWorkTime(lifetime.secondsPerWorkout)} />
+                <Mini
+                  label="Interval rest meters"
+                  value={formatMetersFull(lifetime.intervalRestMeters)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
           <Card>
