@@ -8,6 +8,7 @@ import {
   isLoginRequired,
 } from "@/lib/app-data";
 import { loadFileSettings } from "@/lib/settings-file";
+import { loadLifetime } from "@/lib/lifetime-file";
 import { notFound } from "@tanstack/react-router";
 import { sessionInsights } from "@/lib/insights";
 import { raceRivals } from "@/lib/race";
@@ -137,6 +138,7 @@ export const getDashboard = createServerFn({ method: "GET" }).handler(async () =
     workouts,
     settings: { ...settings, reminderTo: "" },
     stats: buildStats(workouts, settings),
+    lifetime: loadLifetime(),
   };
 });
 
