@@ -4,6 +4,7 @@ import { History, LayoutDashboard, SlidersHorizontal } from "lucide-react";
 import { OmPageHeader, type OmNavItem } from "@omarchy/ui/react";
 import { SplitMark } from "@/components/mark";
 import { ShareButton } from "@/components/share-button";
+import { RefreshButton } from "@/components/refresh-button";
 import { PushSetup } from "@/components/push-setup";
 import { shareBoardPayload } from "@/lib/share";
 
@@ -37,7 +38,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         logo={<SplitMark className="om-header__logo" />}
         nav={nav}
         dock
-        actions={<ShareButton payload={shareBoardPayload()} label="Share board" iconOnly variant="ghost" />}
+        actions={
+          <>
+            <RefreshButton />
+            <ShareButton payload={shareBoardPayload()} label="Share board" iconOnly variant="ghost" />
+          </>
+        }
         renderLink={(item, children, props) => (
           <Link to={item.href} activeOptions={{ exact: true }} {...props}>
             {children}
